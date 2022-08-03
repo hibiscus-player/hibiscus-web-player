@@ -1,0 +1,94 @@
+navbar {
+    background-color: var(--backgroundDarker);
+    width: 220px;
+    overflow-y: scroll;
+}
+navbar_page {
+    position: relative;
+    user-select: none;
+    display: flex;
+    flex-direction: row;
+    height: 40px;
+    cursor: pointer;
+    background-color: #0000;
+    transition: background-color 0.2s cubic-bezier(0, 1, 0.5, 1);
+    border-radius: 8px;
+}
+navbar_page::before {
+    content: '';
+    background-color: #fff;
+    position: absolute;
+    left: -10px;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    transition: left 0.2s ease;
+}
+navbar_page:not(.selected):hover {
+    background-color: #8886;
+}
+navbar_page.selected {
+    background-color: #8884;
+    cursor: default;
+}
+navbar_page.selected::before {
+    left: 0;
+}
+navbar_page_icon {
+    width: 20px;
+    margin: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3em !important;
+    transition: color 0.2s ease;
+}
+navbar_page_name {
+    display: flex;
+    align-items: center;
+    font-size: 1.2em;
+    transition: color 0.2s ease;
+}
+navbar_page_group_header {
+    user-select: none;
+    cursor: pointer;
+    display: block;
+    text-align: center;
+    width: 80%;
+    border-bottom: 1px solid #666;
+    transition: border-bottom 0.2s ease, margin-bottom 0.2s ease, color 0.2s ease;
+    margin: 5pt 10%;
+    margin-top: 0;
+    padding-top: 5px;
+    font-size: 1.2em;
+}
+navbar_page_group_header:not(.collapsed) {
+    border-bottom: 1pt solid #bbb;
+    margin-bottom: 4pt;
+}
+navbar_page_group_header:not(.collapsed):hover {
+    border-bottom: 2pt solid #fff;
+    margin-bottom: 3pt;
+}
+navbar_page_group_header.collapsed:hover {
+    border-bottom: 2pt solid #fff;
+    margin-bottom: 3pt;
+}
+navbar_page_group_contents {
+    transition: height 0.2s ease, transform 0.2s ease;
+    transform-origin: top;
+    display: block;
+    overflow: hidden;
+}
+
+page {
+    position: absolute;
+    overflow-y: auto;
+}
+page#mainPage {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}

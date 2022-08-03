@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title translate="no">Hibiscus – Web Player</title>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,300,0,0"/>
+        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="ui/core.css">
+        <link rel="stylesheet" href="ui/pages.css">
+        <link rel="stylesheet" href="ui/components.css">
+        <link rel="stylesheet" href="ui/markdown.css">
+
+        <meta name="description" content="Hibiscus Web Player">
+        <meta name="keywords" content="hibiscus, hibiscus web player, music, music web player">
+    </head>
+    <body>
+        <div id="top_bar">
+            <div id="title_text" translate="no">hibiscus</div>
+            <div id="top_container">
+                <div id="download">
+                    <span id="download_icon" class="material-symbols-outlined">install_desktop</span>
+                    <span id="download_text">Install on Desktop</span>
+                </div>
+                <div class="flex_grow"></div>
+                <div id="login_google_btn" class="btn btn-normal" onclick="firebaseData.loginGoogle()">Login</div>
+                <div id="self_user_data">
+                    <span id="user_name"></span>
+                    <img id="user_icon" referrerpolicy="no-referrer">
+                </div>
+            </div>
+        </div>
+        <div id="middle_container">
+            <navbar></navbar>
+            <div id="main_container">
+                <page id="mainPage">
+                    
+                </page>
+                <page id="pageLoader" class="loading"></page>
+            </div>
+            <div id="uiLoader" class="loading"></div>
+        </div>
+        <div id="player_bar">
+
+        </div>
+        <script type="module" src="firebase_api.js"></script>
+        <script src="ui/core.js" defer></script>
+        <script src="ui/components.js" defer></script>
+        <script src="ui/pages.js" defer></script>
+        <script src="ui/properties.js" defer></script>
+        <script src="ui/markdown.js" defer></script>
+        <script src="protocol.js" defer></script>
+        <script src="main.js" defer></script>
+    </body>
+</html>

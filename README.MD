@@ -1,0 +1,2 @@
+# Hibiscus Web Client
+This module contains the files for the web client, that is used to interact with a [library server](../library-server). The library server outputs an audio stream, this client is solely for interacting with the library server. 

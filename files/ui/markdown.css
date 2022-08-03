@@ -1,0 +1,20 @@
+mdt.bold {
+    font-weight: bold;
+}
+mdt.italic {
+    font-style: italic;
+}
+mdt.italicbold {
+    font-weight: bold;
+    font-style: italic;
+}
+mdt.underline {
+    text-decoration: underline;
+}
+mdt.strikethrough {
+    text-decoration: line-through;
+}
+.md-link {
+    color: var(--link);
+    text-decoration: underline;
+}

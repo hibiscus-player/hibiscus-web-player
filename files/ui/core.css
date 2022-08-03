@@ -1,0 +1,30 @@
+:root {
+    --colors_bright_red: hsl(0, 88%, 42%);
+    --colors_bright_orange: hsl(27, 89%, 48%);
+    --colors_bright_yellow: hsl(49, 89%, 48%);
+    --colors_bright_green: hsl(125, 89%, 48%);
+    --colors_bright_cyan: hsl(172, 89%, 48%);
+    --colors_bright_blue: hsl(199, 89%, 48%);
+    --colors_bright_purple: hsl(271, 89%, 48%);
+    --colors_bright_magenta: hsl(315, 89%, 48%);
+    --colors_bright_gray: hsl(0, 0%, 67%);
+
+    --colors_dark_red: hsl(0, 82%, 33%);
+    --colors_dark_orange: hsl(27, 82%, 33%);
+    --colors_dark_yellow: hsl(35, 82%, 33%);
+    --colors_dark_green: hsl(125, 82%, 33%);
+    --colors_dark_cyan: hsl(172, 82%, 33%);
+    --colors_dark_blue: hsl(199, 82%, 33%);
+    --colors_dark_purple: hsl(271, 82%, 33%);
+    --colors_dark_magenta: hsl(315, 82%, 33%);
+    --colors_dark_gray: hsl(0, 0%, 25%);
+}
+@keyframes rgb {
+    0% {background-color: hsl(0, 100%, 50%);}
+    16% {background-color: hsl(60, 100%, 50%);}
+    33% {background-color: hsl(120, 100%, 50%);}
+    50% {background-color: hsl(180, 100%, 50%);}
+    66% {background-color: hsl(240, 100%, 50%);}
+    83% {background-color: hsl(300, 100%, 50%);}
+    100% {background-color: hsl(360, 100%, 50%);}
+}
