@@ -1,4 +1,4 @@
-const CORE_URL = "http://localhost:4444";
+const CORE_URL = "http://hibiscus-player.ddns.net";
 const DEFAULT_SERVER_URL = "ws://localhost/websocket";
 
 const CurrentUserData = {
