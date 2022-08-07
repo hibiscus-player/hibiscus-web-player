@@ -125,3 +125,32 @@ class TextBoxComponent extends UIComponent {
         return TextBoxComponent.COMPONENT_TYPE;
     }
 }
+class ButtonComponent extends UIComponent {
+    static COMPONENT_TYPE = "button";
+    buttonText;
+    buttonTextFader;
+    buttonObject;
+    color;
+    constructor(componentID) {
+        super(componentID);
+        this.buttonObject = document.createElement("span");
+        this._rootObject.classList.add("btn");
+        this.buttonObject.innerText = "Button";
+        this.buttonTextFader = new FadingTextChanger(this.buttonObject);
+        this._rootObject.appendChild(this.buttonObject);
+
+        this.buttonText = this._stringProperty("Button", (value)=>{
+            this.buttonObject.innerText = value;
+        });
+        this.color = this._themeColorProperty("var(--primary)", (value)=>{
+            this._rootObject.style.backgroundColor = value;
+        });
+        
+        this._rootObject.onclick = (e)=>{
+            Connection.sendPacket(new ClientPageActionPacket(this.getComponentID(), 0, 0, null));
+        };
+    }
+    getComponentType() {
+        return ButtonComponent.COMPONENT_TYPE;
+    }
+}

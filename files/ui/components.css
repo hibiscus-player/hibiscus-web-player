@@ -37,6 +37,16 @@ component.text_box {
 }
 
 /*
+ * Button Component
+ */
+component.button {
+    padding: 10px 15px;
+    margin: 5px;
+    width: fit-content;
+    user-select: none;
+}
+
+/*
  * Song List
  */
  component.song_list {

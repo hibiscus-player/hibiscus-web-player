@@ -440,6 +440,57 @@ class ClientChangePagePacket extends ClientPacket {
         return 3;
     }
 }
+class ClientPageActionPacket extends ClientPacket {
+    /**
+     * The ID of the component this action is being performed on.
+     * @type {number}
+     */
+    componentId;
+    /**
+     * The ID of the action that is being performed.
+     * @type {number}
+     */
+    actionId;
+    /**
+     * The size of the data being sent. (in bytes)
+     * @type {number}
+     */
+    dataLength;
+    /**
+     * A function to serialize the action data.
+     * @type {(data: DataViewWriter)=>void | null}
+     */
+    dataFunction;
+    /**
+     * 
+     * @param {number} componentId the id of the source component
+     * @param {number} actionId the id of the action
+     * @param {number} dataLength the size of the data
+     * @param {(data: DataViewWriter)=>void | null} dataFunction 
+     */
+    constructor(componentId, actionId, dataLength, dataFunction) {
+        super();
+        this.componentId = componentId;
+        this.actionId = actionId;
+        this.dataLength = dataLength;
+        this.dataFunction = dataFunction;
+    }
+    _compressImpl(data) {
+        data.writeUint32(this.componentId);
+        data.writeUint16(this.actionId);
+        data.writeUint32(this.dataLength);
+        if (this.dataFunction != null) this.dataFunction(data);
+    }
+    dataSize() {
+        return DataSizes.UINT32 + // component ID
+                DataSizes.UINT16 + // action ID
+                DataSizes.UINT32 + // data size
+                this.dataLength;
+    }
+    packetId() {
+        return 4;
+    }
+}
 
 /**
  * This is an utiliy class that facilitates transforming data
@@ -797,6 +848,39 @@ class ServerUpdatePagePacket extends ServerPacket {
     }
     handle(handler) {handler.onUpdatePage(this)}
 }
+class ServerPageActionPacket extends ServerPacket {
+    /**
+     * The id of the component which this action was performed on.
+     * @type {number}
+     */
+    componentId;
+    /**
+     * The id of the action which was performed.
+     * @type {number}
+     */
+    actionId;
+    /**
+     * The offset in {@link data} where the data is located.
+     * @type {number}
+     */
+    offset;
+    /**
+     * The DataViewReader which contains the data for this action
+     * @type {DataViewReader}
+     */
+    data;
+    /**
+     * @param {DataViewReader} data the DataViewReader to read from
+     */
+    constructor(data) {
+        super();
+        this.componentId = data.readUint32();
+        this.actionId = data.readUint16();
+        this.offset = data.getOffset();
+        this.data = data;
+    }
+    handle(handler) {handler.onChangePage(this)}
+}
 /*
  * Registering the server packets
  */
@@ -808,6 +892,7 @@ Protocol._register(4, (data)=>new ServerWelcomePacket(data));
 Protocol._register(5, (data)=>new ServerPageListChangePacket(data));
 Protocol._register(6, (data)=>new ServerChangePagePacket(data));
 Protocol._register(7, (data)=>new ServerUpdatePagePacket(data));
+Protocol._register(8, (data)=>new ServerPageActionPacket(data));
 /*
  * Default protocol handler class
  */

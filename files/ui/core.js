@@ -163,6 +163,7 @@ const UIManager = {
         // Initialize the component registry
         this._COMPONENT_TYPES[TitleBoxComponent.COMPONENT_TYPE] = (componentId)=>new TitleBoxComponent(componentId);
         this._COMPONENT_TYPES[TextBoxComponent.COMPONENT_TYPE] = (componentId)=>new TextBoxComponent(componentId);
+        this._COMPONENT_TYPES[ButtonComponent.COMPONENT_TYPE] = (componentId)=>new ButtonComponent(componentId);
     },
     /**
      * Shows the UI loading screen. This covers the page list
