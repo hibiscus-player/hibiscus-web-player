@@ -1,0 +1,299 @@
+scene#selector {
+    background-color: var(--backgroundDarker);
+}
+#selector_main {
+    width: 100%;
+    min-width: 200px;
+    max-width: 800px;
+    min-height: 600px;
+    margin: auto;
+    background-color: var(--background);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0px 0px 9px 0px #000;
+}
+#selector_body {
+    width: 100%;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+#selector_body_loader {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: opacity 0.5s ease;
+}
+#selector_loader_dummy_title {
+    width: 100%;
+    height: 50px;
+}
+#selector_loader_cover {
+    width: 100%;
+    flex-grow: 1;
+    background-color: var(--background);
+}
+#selector_user {
+    display: flex;
+    flex-direction: row;
+}
+#selector_user.vertical {
+    flex-direction: column;
+}
+#selector_user_data {
+    display: flex;
+    flex-direction: row;
+    margin: 30px 0;
+}
+#selector_user.vertical #selector_user_data {
+    margin-left: auto;
+    margin-right: auto;
+}
+#selector_user_icon_container {
+    min-width: 60px;
+    min-height: 60px;
+    max-width: 60px;
+    max-height: 60px;
+    margin: auto 30px;
+    border: 2px solid white;
+    border-radius: 100px;
+    overflow: hidden;
+}
+#selector_user_icon {
+    width: 100%;
+    height: 100%;
+}
+#selector_user_name {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2em;
+    margin-right: 10px;
+}
+#selector_user_separator {
+    margin: 10px 10px;
+    border: 1px solid gray;
+    background-color: gray;
+}
+#selector_user.vertical #selector_user_separator {
+    margin: 0;
+    border: 0;
+    background-color: transparent;
+}
+#selector_user_buttons {
+    margin-left: 10px;
+    display: flex;
+    flex-direction: column;
+    margin-left: auto;
+    margin-right: auto;
+}
+#signin_buttons {
+    max-width: max-content;
+}
+.signin_button {
+    position: relative;
+    color: white;
+    height: 46px;
+    transition: background-color 0.1s ease;
+    border-radius: 2px;
+}
+.signin_button::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    right: 3px;
+    bottom: 3px;
+    transition: background-color 0.2s ease;
+    background-color: #6660;
+}
+.signin_button:not(.signin_loading) {
+    cursor: pointer;
+}
+.signin_button.signin_disabled {
+    cursor: not-allowed;
+}
+.signin_button.signin_disabled::after {
+    background-color: #6667;
+}
+#signin_google:hover {
+    background-color: #4284F24D;
+}
+#signin_google_inner {
+    position: relative;
+    left: 0;
+    right: 0;
+    top: 3px;
+    height: calc(100% - 6px);
+    margin: 3px;
+    border-radius: 2px;
+    background-color: #4285F4;
+    transition: background-color 0.1s ease;
+    display: flex;
+}
+#signin_google.pressed #signin_google_inner {
+    background-color: #3367D6;
+}
+#signin_google_image {
+    background-image: url(../../assets/signin/btn_google_dark_normal_ios.svg);
+    position: relative;
+    left: -3px;
+    top: -3px;
+    width: 46px;
+    height: 46px;
+}
+#signin_google.pressed #signin_google_image {
+    background-image: url(../../assets/signin/btn_google_dark_pressed_ios.svg);
+}
+#signin_google_text {
+    font-family: 'Roboto';
+    position: relative;
+    left: -3px;
+    right: 0px;
+    height: 40px;
+    margin: 0px 10px;
+    display: flex;
+    flex-grow: 1;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    min-width: max-content;
+}
+.signin_loading {
+    color: #0000 !important;
+    transition: opacity 0.5s ease;
+}
+.signin_loading::after {
+    content: '';
+    width: 15px;
+    height: 15px;
+    border: 5px solid #eee;
+    border-radius: 20px;
+    border-top-color: transparent;
+    border-left-color: transparent;
+    position: absolute;
+    left: calc(46px + ((100% - 50px) * 0.5) - 12.5px);
+    top: calc(50% - 12.5px);
+    animation: rotate 1s linear infinite;
+}
+
+#selector_server_list {
+    flex-grow: 1;
+    overflow-y: auto;
+    height: 0px;
+}
+.selector_server {
+    height: 100px;
+    display: flex;
+    border-top: 1px solid #666;
+    border-bottom: 1px solid #666;
+    overflow: hidden;
+}
+.selector_server_texts {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+.selector_server_name {
+    margin-top: auto;
+    font-size: 2em;
+    margin-left: 15px;
+    transition: color 0.2s ease;
+}
+.selector_server_motd {
+    margin-left: 15px;
+    margin-bottom: auto;
+    transition: color 0.2s ease;
+}
+.selector_server.unknown .selector_server_motd {
+    color: #666;
+    font-style: italic;
+}
+.selector_server.ping_queued .selector_server_motd {
+    color: #666;
+    font-style: italic;
+}
+.selector_server.pinging .selector_server_motd {
+    color: #888;
+    font-style: italic;
+}
+.selector_server.ping_fail .selector_server_motd {
+    color: #a00;
+}
+.selector_server.ping_error .selector_server_motd {
+    color: #a00;
+}
+.selector_server.connectable .selector_server_motd {
+    color: #fff;
+}
+.selector_server_buttons {
+    display: flex;
+    flex-direction: row;
+    height: fit-content;
+    margin-top: auto;
+    margin-bottom: auto;
+    user-select: none;
+    margin-right: 10px;
+    position: relative;
+}
+.selector_server_loader::before {
+    content: '';
+    transition: background-color 0.2s ease;
+}
+.selector_server_loader.joining::before {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--background);
+}
+.selector_server_loader.joining::after {
+    content: '';
+    width: 50px;
+    height: 50px;
+    border: 3px solid #eee;
+    border-radius: 50px;
+    border-top-color: transparent;
+    border-left-color: transparent;
+    position: absolute;
+    left: calc(50% - 25px);
+    top: calc(50% - 25px);
+    animation: rotate 1s linear infinite;
+}
+.selector_server_button {
+    background-color: var(--backgroundBrighter);
+    border-radius: 8px;
+    padding: 5px;
+    margin: 3px;
+    position: relative;
+    cursor: pointer;
+    box-shadow: 0px 0px 3px 0px black;
+    margin-left: 5px;
+}
+.selector_server_button::after {
+    content: '';
+    border-radius: 8px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    transition: background-color 0.1s ease;
+    background-color: #0000;
+}
+.selector_server_button:hover::after {
+    background-color: #eee7;
+}
+.selector_server_button_connect {
+    background-color: var(--colors_dark_green);
+}
+.selector_server_button_delete {
+    background-color: var(--colors_dark_red);
+}
