@@ -80,6 +80,21 @@ class SelectorScene extends Scene {
     _signInButtonsObject;
     _selectedLogin;
 
+    _editorObject;
+    _editorTitleObject;
+    /**
+     * The address input field.
+     * @type {HTMLInputElement}
+     */
+    _editorAddressInput;
+    _editorCompleteButtonObject;
+    /**
+     * The current editor LazyPromise object, or null if
+     * the editor is not open currently.
+     * @type {LazyPromise|null}
+     */
+    _editorPromise;
+
     /**
      * Creates a new SelectorScene object.
      * @param {HTMLElement} sceneRoot the scene root element
@@ -96,6 +111,52 @@ class SelectorScene extends Scene {
         google.onclick = ()=>{
             this._startLogin(google);
         };
+        this._editorObject = this._sceneRoot.querySelector("#selector_editor");
+        this._editorTitleObject = this._sceneRoot.querySelector("#selector_editor_title");
+        this._editorAddressInput = this._sceneRoot.querySelector("#selector_editor_address");
+        this._editorCompleteButtonObject = this._sceneRoot.querySelector("#selector_editor_complete_button");
+        this._editorCompleteButtonObject.onclick = ()=>{
+            this._completeEditor();
+        };
+    }
+    /**
+     * Opens the server editor.
+     * @param {string} title the title of the editor
+     * @param {string} address the default input value of the address field
+     * @returns {Promise<{address: string}>} the edit result
+     */
+    async openServerEditor(title, address, completeButtonText) {
+        if (this._editorPromise != null) {
+            return Promise.reject("Editor already open.");
+        }
+        this._editorPromise = new LazyPromise();
+        
+        this._editorTitleObject.textContent = title;
+        this._editorAddressInput.value = address;
+        this._editorCompleteButtonObject.textContent = completeButtonText;
+
+        this._editorObject.style.display = "";
+        setTimeout(()=>{
+            this._editorObject.style.opacity = "";
+        }, 1);
+        return this._editorPromise.getPromise();
+    }
+    _completeEditor() {
+        this._editorPromise.resolve({
+            address: this._editorAddressInput.value
+        });
+        this._finishEditor();
+    }
+    _escapeEditor(reason) {
+        this._editorPromise.reject(reason);
+        this._finishEditor();
+    }
+    _finishEditor() {
+        this._editorObject.style.opacity = "0";
+        setTimeout(()=>{
+            this._editorObject.style.display = "none";
+            this._editorPromise = null;
+        }, 200);
     }
     _startLogin(selectedLogin) {
         if (this._selectedLogin != null) return;

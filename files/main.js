@@ -318,6 +318,17 @@ class ServerData {
         editBtn.classList.add("selector_server_button");
         editBtn.classList.add("material-symbols-outlined");
         editBtn.translate = false;
+        editBtn.onclick = ()=>{
+            Hibiscus.getSceneManager().getSelectorScene().openServerEditor("Edit Server", this._address, "Save").then((result)=>{
+                if (this._address != result.address) {
+                    this._address = result.address;
+                    this._serverManager.queuePing(this);
+                }
+                this._serverManager.saveLocalStorage();
+            }).catch((reason)=>{
+                // Do not save the server, ignore
+            });
+        };
         buttons.appendChild(editBtn);
 
         let connectBtn = document.createElement("div");

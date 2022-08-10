@@ -182,11 +182,14 @@ scene#selector {
     top: calc(50% - 12.5px);
     animation: rotate 1s linear infinite;
 }
-
-#selector_server_list {
+#selector_servers {
     flex-grow: 1;
-    overflow-y: auto;
     height: 0px;
+    position: relative;
+}
+#selector_server_list {
+    height: 100%;
+    overflow-y: auto;
 }
 .selector_server {
     height: 100px;
@@ -296,4 +299,63 @@ scene#selector {
 }
 .selector_server_button_delete {
     background-color: var(--colors_dark_red);
+}
+#selector_editor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--background);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: opacity 0.2s ease;
+}
+#selector_editor_title {
+    font-size: 2em;
+    margin: 30px 0px;
+}
+#selector_editor_address_text {
+    margin-top: 10px;
+}
+#selector_editor_address {
+    font-size: 1.3em;
+    background-color: var(--backgroundDarker);
+    color: var(--text);
+    border: 1px solid #666;
+    border-color: #666;
+    transition: border-color 0.2s ease;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    width: 400px;
+    max-width: 90%;
+    margin: 10px;
+}
+#selector_editor_address:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+#selector_editor_complete_button {
+    margin: 30px 0px;
+    background-color: var(--backgroundBrighter);
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0px 0px 3px 0px #000;
+    position: relative;
+}
+#selector_editor_complete_button::after {
+    content: '';
+    border-radius: 8px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    transition: background-color 0.1s ease;
+    background-color: #0000;
+}
+#selector_editor_complete_button:hover::after {
+    background-color: #eee7;
 }
