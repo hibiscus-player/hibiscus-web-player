@@ -89,8 +89,8 @@ class TitleBoxComponent extends UIComponent {
         this.titleFader = new FadingTextChanger(this.titleObject);
         this._rootObject.appendChild(this.titleObject);
 
-        this.titleText = this._stringProperty("Title", (value)=>{
-            this.titleObject.innerText = value;
+        this.titleText = this._stringProperty(null, (value)=>{
+            if (value != null) this.titleFader.changeTo(value);
         });
         this.color = this._themeColorProperty("var(--background)", (value)=>{
             this._rootObject.style.backgroundColor = value;
@@ -104,18 +104,16 @@ class TextBoxComponent extends UIComponent {
     static COMPONENT_TYPE = "text_box";
     text;
     textFader;
-    textObject;
     color;
     constructor(componentID) {
         super(componentID);
-        this.textObject = document.createElement("span");
-        this.textObject.innerText = "Example Text";
-        this.titleFader = new FadingTextChanger(this.textObject);
-        this._rootObject.appendChild(this.textObject);
+        this.textFader = new FadingOpacityChanger(this._rootObject, (value)=>{
+            while (this._rootObject.firstChild) this._rootObject.removeChild(this._rootObject.lastChild);
+            Markdown.render(this._rootObject, Markdown.tokenize(value));
+        });
 
-        this.text = this._stringProperty("Example text", (value)=>{
-            while (this.textObject.firstChild) this.textObject.removeChild(this.textObject.lastChild);
-            Markdown.render(this.textObject, Markdown.tokenize(value));
+        this.text = this._stringProperty(null, (value)=>{
+            if (value != null) this.textFader.changeTo(value);
         });
         this.color = this._themeColorProperty("var(--background)", (value)=>{
             this._rootObject.style.backgroundColor = value;
@@ -140,14 +138,14 @@ class ButtonComponent extends UIComponent {
         this._rootObject.appendChild(this.buttonObject);
 
         this.buttonText = this._stringProperty("Button", (value)=>{
-            this.buttonObject.innerText = value;
+            this.buttonTextFader.changeTo(value);
         });
         this.color = this._themeColorProperty("var(--primary)", (value)=>{
             this._rootObject.style.backgroundColor = value;
         });
         
         this._rootObject.onclick = (e)=>{
-            Connection.sendPacket(new ClientPageActionPacket(this.getComponentID(), 0, 0, null));
+            Hibiscus.getCurrentServerConnection().sendPacket(new ClientPageActionPacket(this.getComponentID(), 0, 0, null));
         };
     }
     getComponentType() {

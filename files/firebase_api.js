@@ -16,8 +16,21 @@ const firebaseConfig = {
 
 // Initialize Firebase
 window.firebaseData = {
-    firebaseApp: initializeApp(firebaseConfig),
-    firebaseAuth: getAuth(),
+    firebaseApp: null,
+    firebaseAuth: null,
+    /**
+     * Initializes Firebase.
+     * @param {(user: *)=>void} userCallback the callback to run
+     */
+    init(userCallback) {
+        if (this.firebaseApp != null) {
+            userCallback(getUser());
+        } else {
+            this.firebaseApp = initializeApp(firebaseConfig);
+            this.firebaseAuth = getAuth();
+            this.firebaseAuth.onAuthStateChanged(userCallback);
+        }
+    },
     getUser() {
         return this.firebaseAuth.currentUser;
     },
@@ -34,7 +47,7 @@ window.firebaseData = {
         };
         xhr.send("grant_type=refresh_token&refresh_token=" + refreshToken);
     },
-    loginGoogle: function() {
+    loginGoogle(callback) {
         let provider = new GoogleAuthProvider();
         provider.addScope("https://www.googleapis.com/auth/userinfo.profile");
         this.firebaseAuth.useDeviceLanguage();
@@ -56,6 +69,7 @@ window.firebaseData = {
 
             console.log("Result itself:");
             console.log(result);
+            callback(result.user);
         }).catch((error) => {
             // Handle Errors here.
             const errorCode = error.code;
@@ -79,6 +93,7 @@ window.firebaseData = {
 
             console.log("Result itself:");
             console.log(error);
+            callback(null);
         });
     }
 }

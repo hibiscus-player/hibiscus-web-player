@@ -1,66 +1,469 @@
-const CORE_URL = "http://hibiscus-player.ddns.net";
-const DEFAULT_SERVER_URL = "ws://localhost/websocket";
-
-const CurrentUserData = {
-    _username: null,
-    _user_icon_url: null,
-    _user_token: null,
-
-    _username_holder: null,
-    _user_icon_holder: null,
+const Hibiscus = {
+    CORE_URL: "http://hibiscus-player.ddns.net",
     _init: false,
-    _isMobile: false,
-    _last_server_key: null,
-    _serverName: null,
-    _serverMotd: null,
+    _sceneManager: null,
+    _serverManager: null,
+    _selfUserManager: null,
     init() {
         this._init = true;
-        this._isMobile = /Mobi/i.test(window.navigator.userAgent);
-        this._username_holder = document.querySelector("#self_user_data #user_name");
-        this._user_icon_holder = document.querySelector("#self_user_data #user_icon");
-        this.queryUserData();
-    },
-    queryUserData() {
-        //TODO make this work lmao
-        if (window.firebaseData.isLoggedIn()) {
-            this.setUsername(window.firebaseData.firebaseAuth.currentUser.displayName);
-            this.setUserIconUrl(window.firebaseData.firebaseAuth.currentUser.photoURL);
-            document.getElementById("login_google_btn").remove()
-        } else {
-            this.setUsername("Guest");
-            this.setUserIconUrl("ui/guest.svg")
+        this._sceneManager = new SceneManager();
+        this._serverManager = new ServerManager();
+        this._serverManager.loadLocalStorage();
+        this._selfUserManager = new SelfUserManager();
+
+        UIManager._init();
+
+        let query = new URLSearchParams(window.location.search);
+        if (query.has("server")) {
+            let targetServer = query.get("server");
+            // TODO connect directly
         }
     },
-    setUsername(username) {
-        this._username = username;
-        this._username_holder.innerText = username;
+    /**
+     * Returns the SceneManager object.
+     * @returns {SceneManager} the SceneManager object
+     */
+    getSceneManager() {
+        return this._sceneManager;
     },
-    setUserIconUrl(iconUrl) {
-        this._user_icon_url = iconUrl;
-        this._user_icon_holder.src = iconUrl;
+    /**
+     * Returns the ServerManager object.
+     * @returns {ServerManager} the ServerManager object
+     */
+    getServerManager() {
+        return this._serverManager;
     },
-    getUserName() {
-        return this._username;
+    /**
+     * Returns the SelfUserManager object.
+     * @returns {SelfUserManager} the SelfUserManager object
+     */
+    getSelfUserManager() {
+        return this._selfUserManager;
     },
-    getUserIconUrl() {
-        return this._user_icon_url;
-    },
-    setServerData(serverName, serverMotd) {
-        this._serverName = serverName;
-        this._serverMotd = serverMotd;
-    },
+    /**
+     * Returns the main ServerConnection object.
+     * @returns {ServerConnection} the main ServerConnection object
+     */
+    getCurrentServerConnection() {
+        return this._serverManager.getCurrentServerConnection();
+    }
+
+}
+class ServerManager {
+    static CONCURRENT_PING_COUNT = 1;
+    /**
+     * An array containing ServerData objects.
+     * @type {Array<ServerData>}
+     */
+    _servers;
+    _serverListObject;
+    _mainServerConnection;
+    /**
+     * A list of the currently available ServerConnection objects
+     * to use for pinging servers. This is used to allow for
+     * multiple concurrent server pings.
+     * @type {Array<ServerConnection>}
+     */
+    _availablePingServerConnections;
+    /**
+     * A queue of ServerData objects to ping.
+     * @type {Array<ServerData>}
+     */
+    _pingQueue;
+    constructor() {
+        this._servers = [];
+        this._serverListObject = document.querySelector("div#selector_server_list");
+        this._mainServerConnection = new ServerConnection();
+        this._availablePingServerConnections = [];
+        this._pingQueue = [];
+        for (let i = 0; i < ServerManager.CONCURRENT_PING_COUNT; i++) {
+            this._availablePingServerConnections.push(new ServerConnection());
+        }
+    }
+    /**
+     * Pings the specified server.
+     * @param {ServerData} serverData the server to ping
+     */
+    queuePing(serverData) {
+        serverData.updateState(ServerState.PING_QUEUED);
+        this._pingQueue.push(serverData);
+        this._checkPingQueue();
+    }
+    _checkPingQueue() {
+        if (this._pingQueue.length == 0) return;
+        if (this._availablePingServerConnections == 0) return;
+
+        let connection = this._availablePingServerConnections.shift();
+        let toPing = this._pingQueue.shift();
+        toPing.updateState(ServerState.PINGING);
+        connection.ping(toPing.getAddress()).then((data)=>{
+            toPing.updateData(data.serverName, data.serverMotd, data.ping);
+            this._availablePingServerConnections.push(connection);
+            this._checkPingQueue();
+        }).catch((error)=>{
+            toPing.updateState(error.errorState);
+            this._availablePingServerConnections.push(connection);
+            this._checkPingQueue();
+        });
+    }
+    /**
+     * Returns the main ServerConnection object.
+     * @returns {ServerConnection} the main ServerConnection object
+     */
+    getMainServerConnection() {
+        return this._mainServerConnection;
+    }
+    /**
+     * Returns the ServerConnection object for the current server connection.
+     * @returns {ServerConnection} the main ServerConnection object
+     */
+    getCurrentServerConnection() {
+        return this._mainServerConnection.isConnected() ? this._mainServerConnection : null;
+    }
+    loadLocalStorage() {
+        let serializedArray = JSON.parse(localStorage.getItem("servers"));
+        if (serializedArray == null) {
+            // Save an empty array
+            this.saveLocalStorage();
+            return;
+        }
+        for (let serialized of serializedArray) {
+            let sd = ServerData.deserialize(this, serialized);
+            this._serverListObject.appendChild(sd._rootObject);
+            this._servers.push(sd);
+            this.queuePing(sd);
+        }
+    }
+    saveLocalStorage() {
+        let array = [];
+        for (let server of this._servers) {
+            array.push(server.serialize());
+        }
+        localStorage.setItem("servers", JSON.stringify(array));
+    }
+    /**
+     * Removes a server from the server list.
+     * @param {ServerData} serverData the ServerData to remove
+     */
+    remove(serverData) {
+        this._serverListObject.removeChild(serverData._rootObject);
+        this._servers.splice(this._servers.indexOf(serverData), 1);
+        this.saveLocalStorage();
+    }
+    /**
+     * Connects to the specified server.
+     * @param {ServerData} serverData the ServerData to connect to
+     */
+    connect(serverData) {
+        serverData.setLoader(true);
+        this._mainServerConnection.login(serverData.getAddress()).then(()=>{
+            Hibiscus.getSceneManager().selectScene(Hibiscus.getSceneManager().getServerScene());
+            serverData.setLoader(false);
+        }).catch(()=>{
+            serverData.setLoader(false);
+        });
+    }
+    /**
+     * Connects to the specified server.
+     * @param {string} address the address to connect to
+     */
+    connectDirect(address) {
+        this._mainServerConnection.login(address).then(()=>{
+            Hibiscus.getSceneManager().selectScene(Hibiscus.getSceneManager().getServerScene());
+        }).catch(()=>{
+
+        });
+    }
+}
+class ServerState {
+    static UNKNOWN = new ServerState("unknown", "???");
+    static PING_QUEUED = new ServerState("ping_queued", "Queued...");
+    static PINGING = new ServerState("pinging", "Pinging...");
+    static PING_FAIL = new ServerState("ping_fail", "Failed to ping the server.");
+    static PING_ERROR = new ServerState("ping_error", "The server sent an invalid response.");
+    static CONNECTABLE = new ServerState("connectable", " "); // Invisible character, to make the screen consistent
+
+    /**
+     * The name of the CSS class to apply to the root element.
+     * @type {string}
+     */
+    _className;
+    /**
+     * The status text to display in this state, or `null` for no status text.
+     * @type {string|null}
+     */
+    _statusText;
+    constructor(className, statusText) {
+        this._className = className;
+        this._statusText = statusText;
+    }
+    /**
+     * Applies this state to the specified ServerData
+     * @param {ServerData} serverData the ServerData to apply to
+     */
+    apply(serverData) {
+        serverData._rootObject.classList.add(this._className);
+        if (this._statusText != null) serverData._descriptionFader.changeToFast(this._statusText);
+    }
+    /**
+     * Removes this state from the specified ServerData
+     * @param {ServerData} serverData the ServerData to remove from
+     */
+    remove(serverData) {
+        serverData._rootObject.classList.remove(this._className);
+    }
+}
+class ServerData {
+    /**
+     * The ServerManager object that this ServerData was created with.
+     * @type {ServerManager}
+     */
+    _serverManager;
+    /**
+     * The name of this server.
+     * @type {string}
+     */
+    _serverName;
+    /**
+     * The MOTD of this server.
+     * @type {string}
+     */
+    _serverMotd;
+    /**
+     * The ping to this server.
+     * @type {number}
+     */
+    _ping;
+    /**
+     * The address of this server.
+     * @type {string}
+     */
+    _address;
+    /**
+     * The current state of this server. One of:
+     * - {@link ServerState.UNKNOWN}
+     * - {@link ServerState.PING_QUEUED}
+     * - {@link ServerState.PINGING}
+     * - {@link ServerState.PING_FAIL}
+     * - {@link ServerState.PING_ERROR}
+     * - {@link ServerState.CONNECTABLE}
+     * @type {ServerState}
+     */
+    _state;
+
+    /**
+     * The HTML object in the server selector.
+     * @type {HTMLElement}
+     */
+    _rootObject;
+    _nameFader;
+    _descriptionFader;
+    _loaderObject;
+    /**
+     * Creates a new ServerData object from the
+     * serialized form.
+     * @param {ServerManager} serverManager a ServerManager object
+     * @param {{address: string, lastKnownName: string}} serialized the serialized form of this server
+     * @returns {ServerData} the deserialized ServerData
+     */
+    static deserialize(serverManager, serialized) {
+        return new ServerData(serverManager, serialized.address, serialized.lastKnownName);
+    }
+    /**
+     * Creates a new ServerData object.
+     * @param {ServerManager} serverManager a ServerManager object
+     * @param {string} address the address of this server
+     * @param {string} lastKnownName the last known name for this server
+     */
+    constructor(serverManager, address, lastKnownName) {
+        this._serverManager = serverManager;
+        this._address = address;
+        this._serverName = lastKnownName;
+
+        this._rootObject = document.createElement("div");
+        this._rootObject.classList.add("selector_server");
+        let texts = document.createElement("div");
+        texts.classList.add("selector_server_texts");
+        this._rootObject.appendChild(texts);
+
+        let nameObject = document.createElement("div");
+        nameObject.classList.add("selector_server_name");
+        nameObject.innerText = this._serverName;
+        nameObject.translate = false;
+        this._nameFader = new FadingTextChanger(nameObject, 200);
+        texts.appendChild(nameObject);
+
+        let descriptionObject = document.createElement("div");
+        descriptionObject.classList.add("selector_server_motd");
+        this._descriptionFader = new FadingTextChanger(descriptionObject, 200);
+        texts.appendChild(descriptionObject);
+
+        let buttons = document.createElement("div");
+        buttons.classList.add("selector_server_buttons");
+        this._rootObject.appendChild(buttons);
+
+        let deleteBtn = document.createElement("div");
+        deleteBtn.textContent = "delete";
+        deleteBtn.classList.add("selector_server_button_delete");
+        deleteBtn.classList.add("selector_server_button");
+        deleteBtn.classList.add("material-symbols-outlined");
+        deleteBtn.translate = false;
+        deleteBtn.onclick = ()=>{
+            this._serverManager.remove(this);
+        };
+        buttons.appendChild(deleteBtn);
+
+        let editBtn = document.createElement("div");
+        editBtn.textContent = "Edit";
+        editBtn.classList.add("selector_server_button");
+        editBtn.classList.add("material-symbols-outlined");
+        editBtn.translate = false;
+        buttons.appendChild(editBtn);
+
+        let connectBtn = document.createElement("div");
+        connectBtn.textContent = "login";
+        connectBtn.classList.add("selector_server_button_connect");
+        connectBtn.classList.add("selector_server_button");
+        connectBtn.classList.add("material-symbols-outlined");
+        connectBtn.translate = false;
+        connectBtn.onclick = ()=>{
+            this._serverManager.connect(this);
+        };
+        buttons.appendChild(connectBtn);
+
+        this._loaderObject = document.createElement("div");
+        this._loaderObject.classList.add("selector_server_loader");
+        buttons.appendChild(this._loaderObject);
+
+        this._state = ServerState.UNKNOWN;
+        this.updateState(ServerState.UNKNOWN);
+    }
+    serialize() {
+        return {
+            address: this._address,
+            lastKnownName: this._serverName
+        };
+    }
+    getServerName() {
+        return this._serverName;
+    }
+    getServerMotd() {
+        return this._serverMotd;
+    }
+    getPing() {
+        return this._ping;
+    }
+    getAddress() {
+        return this._address;
+    }
+    setLoader(value) {
+        if (value) {
+            this._loaderObject.classList.add("joining");
+        } else {
+            this._loaderObject.classList.remove("joining");
+        }
+    }
+    updateState(state) {
+        this._state.remove(this);
+        this._state = state;
+        state.apply(this);
+    }
+    updateData(name, motd, ping) {
+        this.updateState(ServerState.CONNECTABLE);
+
+        this._serverName = name;
+        this._nameFader.changeTo(name);
+
+        this._serverMotd = motd;
+        this._descriptionFader.changeTo(motd);
+
+        this._ping = ping;
+        this._serverManager.saveLocalStorage();
+    }
+}
+class SelfUserManager {
+    /**
+     * The icon URL for the guest icon. This icon is displayed when
+     * the user has not logged in (yet).
+     */
+    static GUEST_ICON_URL = "assets/guest.svg";
+    /**
+     * The name of the user.
+     * @type {string}
+     */
+    _name;
+    /**
+     * The icon URL of this user.
+     * @type {string}
+     */
+    _icon_url;
+    /**
+     * The profile ID of this user. This is the public user id from Firebase.
+     * @type {string}
+     */
+    _profileId;
+    /**
+     * The access token of this user. This is the access key received from Firebase,
+     * and is used during authentication.
+     * @type {string}
+     */
+    _accessToken;
+    /**
+     * `true` if the current device is a mobile device.
+     * @type {boolean}
+     */
+    _mobile;
+
+    _selector_name_fader;
+    _selector_icon_fader;
+
+    _server_name_fader;
+    _server_icon_fader;
+    constructor() {
+        this._isMobile = /Mobi/i.test(window.navigator.userAgent);
+        this._selector_name_fader = new FadingTextChanger(document.querySelector("#selector_user_name"));
+        this._selector_icon_fader = new FadingImageChanger(document.querySelector("#selector_user_icon"));
+
+        this._server_name_fader = new FadingTextChanger(document.querySelector("#self_user_data #user_name"));
+        this._server_icon_fader = new FadingImageChanger(document.querySelector("#self_user_data #user_icon"));
+        
+        firebaseData.init((user)=>{
+            if (user != null) {
+                this._name = user.displayName;
+                this._icon_url = user.photoURL;
+                this._profileId = user.uid;
+                this._accessToken = user.accessToken;
+            } else {
+                this._name = "Guest";
+                this._icon_url = SelfUserManager.GUEST_ICON_URL;
+                this._profileId = null;
+            }
+
+            this._selector_name_fader.changeTo(this._name);
+            this._selector_icon_fader.changeTo(this._icon_url);
+            this._server_name_fader.changeTo(this._name);
+            this._server_icon_fader.changeTo(this._icon_url);
+
+            Hibiscus.getSceneManager().getSelectorScene().setSignedIn(user != null);
+            Hibiscus.getSceneManager().getSelectorScene().setLoaderVisible(false);
+        });
+    }
     isGuest() {
-        return !window.firebaseData.isLoggedIn();
-    },
+        return this._profileId == null;
+    }
     isMobile() {
         return this._isMobile;
-    },
+    }
+    getUserName() {
+        return this._name;
+    }
+    getUserIconUrl() {
+        return this._icon_url;
+    }
     getProfileId() {
-        return window.firebaseData.firebaseAuth.currentUser.uid;
-    },
+        return this._profileId;
+    }
     async performIdentityCheck(serverKey) {
-        this._last_server_key = serverKey;
-
         let resolve;
         let reject;
         let promise = new Promise((resolved, rejected)=>{
@@ -68,8 +471,8 @@ const CurrentUserData = {
             reject = rejected;
         });
         let xhr = new XMLHttpRequest();
-        xhr.open("POST", CORE_URL + "/api/v1/joinServer");
-        xhr.setRequestHeader("Authorization", window.firebaseData.firebaseAuth.currentUser.accessToken);
+        xhr.open("POST", Hibiscus.CORE_URL + "/api/v1/joinServer");
+        xhr.setRequestHeader("Authorization", this._accessToken);
         xhr.setRequestHeader("X-Server-Key", serverKey);
         xhr.onerror = (e)=>{
             reject(e);
@@ -134,11 +537,36 @@ class DeviceData {
         return (this._deviceFlags & ClientHelloPacket.IS_GUEST_BIT) > 0;
     }
 }
-const Connection = {
-    _websocket: null,
-    _handler: null,
-    _connected: false,
-    async _connect(address) {
+/**
+ * A class responsible for handling connection to a server.
+ * This class is reusable, meaning that if you want to
+ * connect to a new server, you don't have to create a new
+ * instance.
+ */
+class ServerConnection {
+    /**
+     * The current WebSocket instance, if there is an open connection.
+     * If there are no connections, then this is `null`.
+     * @type {WebSocket}
+     */
+    _websocket;
+    /**
+     * The current PacketHandler instance.
+     * @type {PacketHandler}
+     */
+    _handler;
+    /**
+     * A boolean, where `true` means this ServerConnection
+     * has an open connection to a server.
+     * @type {boolean}
+     */
+    _connected;
+    constructor() {
+        this._websocket = null;
+        this._handler = null;
+        this._connected = null;
+    }
+    _connect(address) {
         if (this._handler == null) throw new Error("Cannot connect without a handler set.");
         if (this._websocket != null) this.disconnect();
         this._websocket = new WebSocket(address);
@@ -146,7 +574,6 @@ const Connection = {
         this._websocket.onopen = (_) => {
             this._connected = true;
             this._handler.onJoin();
-            //resolve();
         };
         this._websocket.onmessage = msg => {
             let packet = Protocol.decodeServerPacket(msg.data);
@@ -164,17 +591,28 @@ const Connection = {
             }
         };
         this._websocket.onerror = (e) => {
-            //reject(e);
-            this._handler.onConnectionFail();
+            this._handler.onConnectionFail(e);
             this._handler = null;
             this._websocket = null;
             this._connected = false;
         }
-    },
+    }
     async login(address) {
-        this._handler = new MainHandler();
+        let resolve;
+        let reject;
+        let promise = new Promise((resolved, rejected)=>{
+            resolve = resolved;
+            reject = rejected;
+        });
+        this._handler = new MainHandler(this, resolve, reject);
         this._connect(address);
-    },
+        return promise;
+    }
+    /**
+     * Pings the specified server.
+     * @param {string} address the address to ping
+     * @returns {Promise<{ping: string, serverName: string, serverMotd: string}>}
+     */
     async ping(address) {
         let resolve;
         let reject;
@@ -182,66 +620,100 @@ const Connection = {
             resolve = resolved;
             reject = rejected;
         });
-        this._handler = new PingHandler(resolve, reject);
+        this._handler = new PingHandler(this, resolve, reject);
         this._connect(address);
         return promise;
-    },
+    }
     disconnect() {
         if (this.isConnected()) {
             this._handler.onDisconnect();
             this._handler = null;
+            this._connected = false;
             this._websocket.close();
             this._websocket = null;
         }
-    },
+    }
     isConnected() {
-        return this._websocket != null;
-    },
+        return this._connected;
+    }
     sendPacket(packet) {
         if (!this._connected) return;
         this._websocket.send(packet.compress());
     }
 }
-const ServerData = {
-
-}
 class PingHandler extends PacketHandler {
+    /**
+     * The ServerConnection of this PacketHandler. Used to send packets.
+     * @type {ServerConnection}
+     */
+    _connection;
     _resolve;
     _reject;
 
+    /**
+     * The server name, if known. Otherwise, this variable will be `null`.
+     * @type {string|null}
+     */
     _serverName;
+    /**
+     * The server MOTD, if known. Otherwise, this variable will be `null`.
+     * @type {string|null}
+     */
     _serverMotd;
+    /**
+     * The ping to the server, if known. Otherwise, this variable will be `-1`.
+     * @type {string}
+     */
     _ping;
-    constructor (resolve, reject) {
+    /**
+     * Creates a new PingHandler.
+     * @param {ServerConnection} connection the ServerConnection to use
+     * @param {()=>void} resolve the Promise resolve function
+     * @param {()=>void} reject the Promise reject function
+     */
+    constructor (connection, resolve, reject) {
         super();
+        this._connection = connection;
         this._resolve = resolve;
         this._reject = reject;
+
+        this._serverName = null;
+        this._serverMotd = null;
+        this._ping = -1;
     }
 
     onJoin() {
         let userFlags = 0;
         userFlags|=ClientHelloPacket.IS_WEB_VERSION_BIT;
         let profileId = null;
-        if (CurrentUserData.isMobile()) userFlags|=ClientHelloPacket.IS_MOBILE_BIT;
-        if (CurrentUserData.isGuest()) {
+        if (Hibiscus.getSelfUserManager().isMobile()) userFlags|=ClientHelloPacket.IS_MOBILE_BIT;
+        if (Hibiscus.getSelfUserManager().isGuest()) {
             userFlags|=ClientHelloPacket.IS_GUEST_BIT;
         } else {
-            profileId = CurrentUserData.getProfileId();
+            profileId = Hibiscus.getSelfUserManager().getProfileId();
         }
-        Connection.sendPacket(new ClientHelloPacket(userFlags, profileId));
+        this._connection.sendPacket(new ClientHelloPacket(userFlags, profileId));
     }
     onDisconnect() {
 
     }
-    onConnectionTerminate(error) {
-        this._reject({
-            error: "terminated",
-            code: error.code
-        });
+    onConnectionTerminate(event) {
+        if (this._serverName != null && this._serverMotd != null) {
+            this._resolve({
+                ping: this._ping,
+                serverName: this._serverName,
+                serverMotd: this._serverMotd,
+            });
+        } else {
+            this._reject({
+                errorState: ServerState.PING_ERROR,
+                kickReason: packet.kickReason
+            });
+        }
     }
     onConnectionFail(error) {
         this._reject({
-            error: "failed"
+            errorState: ServerState.PING_FAIL
         });
     }
     /**
@@ -252,17 +724,25 @@ class PingHandler extends PacketHandler {
         this._serverName = packet.serverName;
         this._serverMotd = packet.serverMotd;
         this._ping = Date.now();
-        Connection.sendPacket(new ClientPingPacket(this._ping));
+        this._connection.sendPacket(new ClientPingPacket(this._ping));
     }
     /**
      * A handler method for the packet {@link ServerKickPacket}.
      * @param {ServerKickPacket} packet the packet
      */
     onKick(packet) {
-        this._reject({
-            error: "kicked",
-            kickReason: packet.kickReason
-        });
+        if (this._serverName != null && this._serverMotd != null) {
+            this._resolve({
+                ping: this._ping,
+                serverName: this._serverName,
+                serverMotd: this._serverMotd,
+            });
+        } else {
+            this._reject({
+                errorState: ServerState.PING_ERROR,
+                kickReason: packet.kickReason
+            });
+        }
     }
     /**
      * A handler method for the packet {@link ServerPongPacket}.
@@ -277,46 +757,71 @@ class PingHandler extends PacketHandler {
                 serverName: this._serverName,
                 serverMotd: this._serverMotd
             });
-            Connection.disconnect();
+            this._connection.disconnect();
         }
     }
 }
 class MainHandler extends PacketHandler {
-    constructor() {
+    /**
+     * The ServerConnection of this PacketHandler. Used to send packets.
+     * @type {ServerConnection}
+     */
+    _connection;
+    _resolve;
+    _reject;
+    constructor (connection, resolve, reject) {
         super();
+        this._connection = connection;
+        this._resolve = resolve;
+        this._reject = reject;
     }
     onJoin() {
         let userFlags = ClientHelloPacket.IS_LOGIN_BIT;
         userFlags|=ClientHelloPacket.IS_WEB_VERSION_BIT;
         let profileId = null;
-        if (CurrentUserData.isMobile()) userFlags|=ClientHelloPacket.IS_MOBILE_BIT;
-        if (CurrentUserData.isGuest()) {
+        if (Hibiscus.getSelfUserManager().isMobile()) userFlags|=ClientHelloPacket.IS_MOBILE_BIT;
+        if (Hibiscus.getSelfUserManager().isGuest()) {
             userFlags|=ClientHelloPacket.IS_GUEST_BIT;
         } else {
-            profileId = CurrentUserData.getProfileId();
+            profileId = Hibiscus.getSelfUserManager().getProfileId();
         }
-        Connection.sendPacket(new ClientHelloPacket(userFlags, profileId));
+        this._connection.sendPacket(new ClientHelloPacket(userFlags, profileId));
+    }
+    onConnectionTerminate() {
+        this._reject({
+            error: "terminated",
+            code: error.code
+        });
+    }
+    onConnectionFail() {
+        this._reject({
+            error: "failed"
+        });
+    }
+    onDisconnect() {
+
     }
     /**
      * A handler method for the packet {@link ServerHelloPacket}.
      * @param {ServerHelloPacket} packet the packet
      */
     onHello(packet) {
-        CurrentUserData.setServerData(packet.serverName, packet.serverMotd);
+        // Currently unused
+        // TODO maybe display the information somewhere
     }
     /**
      * A handler method for the packet {@link ServerIdentityRequestPacket}.
      * @param {ServerIdentityRequestPacket} packet the packet
      */
     onIdentityRequest(packet) {
-        console.log("Performing identity check as " + CurrentUserData.getProfileId() + "...");
-        CurrentUserData.performIdentityCheck(packet.serverKey)
+        console.log("Performing identity check as " + Hibiscus.getSelfUserManager().getProfileId() + "...");
+        Hibiscus.getSelfUserManager().performIdentityCheck(packet.serverKey)
             .then((result)=>{
                 console.log("Completed identity check.");
-                Connection.sendPacket(new ClientIdentityCompletePacket());
+                this._connection.sendPacket(new ClientIdentityCompletePacket());
             })
             .catch((error)=>{
-                Connection.disconnect();
+                this._connection.disconnect();
             });
     }
     /**
@@ -336,6 +841,7 @@ class MainHandler extends PacketHandler {
     onWelcome(packet) {
         this._log(packet);
         UIManager.clearData();
+        this._resolve();
     }
     /**
      * A handler method for the packet {@link ServerPageListChangePacket}.
@@ -391,10 +897,4 @@ class MainHandler extends PacketHandler {
         UIManager.updatePageData(packet);
     }
 }
-
-CurrentUserData.init();
-setTimeout(()=>{
-    CurrentUserData.queryUserData();
-    UIManager._init();
-    if (DEFAULT_SERVER_URL != null) Connection.login(DEFAULT_SERVER_URL);
-}, 500);
+Hibiscus.init();

@@ -21,7 +21,7 @@ component.title_box span {
     top: 0;
     bottom: 0;
 
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -34,6 +34,7 @@ component.title_box span {
  */
 component.text_box {
     margin: 5px;
+    transition: opacity 0.2s ease;
 }
 
 /*

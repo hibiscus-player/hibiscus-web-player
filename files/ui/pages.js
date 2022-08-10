@@ -70,7 +70,7 @@
      * @param {string} name the new name
      */
     setName(name) {
-        this._name.changeText(name);
+        this._name.changeTo(name);
     }
     /**
      * Adds the specified UIPage to the list of contained pages.
@@ -217,7 +217,7 @@ class UIPage {
      * @param {string} name the new page name
      */
     setName(name) {
-        this._name.changeText(name);
+        this._name.changeTo(name);
     }
     /**
      * Sets the page icon to the specified string.
@@ -226,7 +226,7 @@ class UIPage {
      */
     setIcon(icon) {
         if (icon.startsWith("material:")) {
-            this._icon.changeText(icon.substring("material:".length));
+            this._icon.changeTo(icon.substring("material:".length));
         }
     }
     /**

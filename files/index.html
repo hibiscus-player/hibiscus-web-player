@@ -8,51 +8,99 @@
         <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,300,0,0"/>
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="ui/scenes/selector.css">
+        <link rel="stylesheet" href="ui/scenes/server.css">
         <link rel="stylesheet" href="ui/core.css">
         <link rel="stylesheet" href="ui/pages.css">
         <link rel="stylesheet" href="ui/components.css">
         <link rel="stylesheet" href="ui/markdown.css">
+        <link rel="stylesheet" href="ui/scenes.css">
 
         <meta name="description" content="Hibiscus Web Player">
         <meta name="keywords" content="hibiscus, hibiscus web player, music, music web player">
+        <meta name="referrer" content="no-referrer">
     </head>
     <body>
-        <div id="top_bar">
-            <div id="title_text" translate="no">hibiscus</div>
-            <div id="top_container">
-                <div id="download">
-                    <span id="download_icon" class="material-symbols-outlined">install_desktop</span>
-                    <span id="download_text">Install on Desktop</span>
-                </div>
-                <div class="flex_grow"></div>
-                <div id="login_google_btn" class="btn btn-normal" onclick="firebaseData.loginGoogle()">Login</div>
-                <div id="self_user_data">
-                    <span id="user_name"></span>
-                    <img id="user_icon" referrerpolicy="no-referrer">
-                </div>
-            </div>
-        </div>
-        <div id="middle_container">
-            <navbar></navbar>
-            <div id="main_container">
-                <page id="mainPage">
-                    
-                </page>
-                <page id="pageLoader" class="loading"></page>
-            </div>
-            <div id="uiLoader" class="loading"></div>
-        </div>
-        <div id="player_bar">
+        <scenes>
+            <scene id="selector">
+                <div id="selector_main">
+                    <div id="top_bar">
+                        <div id="title_text" translate="no">hibiscus</div>
+                    </div>
+                    <div id="selector_body">
+                        <div id="selector_user">
+                            <div class="flex_grow"></div>
+                            <div id="selector_user_data">
+                                <div id="selector_user_icon_container">
+                                    <img id="selector_user_icon" alt="">
+                                </div>
+                                <div id="selector_user_name"></div>
+                            </div>
+                            <div id="selector_user_separator"></div>
+                            <div id="selector_user_buttons">
+                                <div class="flex_grow"></div>
+                                <div id="signin_buttons">
+                                    <div id="signin_google" class="signin_button">
+                                        <div id="signin_google_inner">
+                                            <div id="signin_google_image"></div>
+                                            <div id="signin_google_text">Sign in with Google</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex_grow"></div>
+                            </div>
+                            <div class="flex_grow"></div>
+                        </div>
+                        <hr style="width: 90%;">
+                        <div id="selector_server_list">
 
-        </div>
-        <script type="module" src="firebase_api.js"></script>
-        <script src="ui/core.js" defer></script>
-        <script src="ui/components.js" defer></script>
-        <script src="ui/pages.js" defer></script>
-        <script src="ui/properties.js" defer></script>
-        <script src="ui/markdown.js" defer></script>
-        <script src="protocol.js" defer></script>
-        <script src="main.js" defer></script>
+                        </div>
+                    </div>
+                    <div id="selector_body_loader">
+                        <div id="selector_loader_dummy_title"></div>
+                        <div id="selector_loader_cover"></div>
+                        <div id="selector_body_loader_inner" class="loading"></div>
+                    </div>
+                </div>
+            </scene>
+            <scene id="server" style="display: none">
+                <div id="top_bar">
+                    <div id="title_text" translate="no">hibiscus</div>
+                    <div id="top_container">
+                        <div id="install_desktop">
+                            <span id="install_desktop_icon" class="material-symbols-outlined">install_desktop</span>
+                            <span id="install_desktop_text">Install on Desktop</span>
+                        </div>
+                        <div class="flex_grow"></div>
+                        <div id="self_user_data">
+                            <span id="user_name"></span>
+                            <img id="user_icon">
+                        </div>
+                    </div>
+                </div>
+                <div id="middle_container">
+                    <navbar></navbar>
+                    <div id="main_container">
+                        <page id="mainPage">
+                            
+                        </page>
+                        <page id="pageLoader" class="loading"></page>
+                    </div>
+                    <div id="uiLoader" class="loading"></div>
+                </div>
+                <div id="player_bar">
+        
+                </div>
+                <script type="module" src="firebase_api.js"></script>
+                <script src="ui/core.js" defer></script>
+                <script src="ui/components.js" defer></script>
+                <script src="ui/pages.js" defer></script>
+                <script src="ui/properties.js" defer></script>
+                <script src="ui/markdown.js" defer></script>
+                <script src="ui/scenes.js" defer></script>
+                <script src="protocol.js" defer></script>
+                <script src="main.js" defer></script>
+            </scene>
+        </scenes>
     </body>
 </html>

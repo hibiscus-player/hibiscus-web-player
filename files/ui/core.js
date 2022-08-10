@@ -1,4 +1,4 @@
-class FadingTextChanger {
+class FadingChanger {
     static STATE_READY = 0;
     static STATE_FADE_OUT = 1;
     static STATE_FADE_IN = 2;
@@ -34,30 +34,34 @@ class FadingTextChanger {
     constructor(object, fadeDuration=200) {
         this._object = object;
         this._fadeDuration = fadeDuration;
-        this._currentValue = object.innerText;
+        this._currentValue = null;
         this._targetValue = null;
         this._state = FadingTextChanger.STATE_READY;
     }
-    changeText(newValue) {
+    changeTo(newValue) {
+        if (this._currentValue == null) {
+            this.changeToFast(newValue);
+            return;
+        }
         if (this._state == FadingTextChanger.STATE_READY && this._currentValue == newValue) return;
         else if (this._targetValue == newValue) return;
 
         this._targetValue = newValue;
         if (this._state == FadingTextChanger.STATE_READY) this._doFade();
     }
-    changeTextFast(newValue) {
+    changeToFast(newValue) {
         this._currentValue = newValue;
-        this._object.innerText = newValue;
+        this._doSetValue(newValue);
     }
     _doFade() {
         this._state = FadingTextChanger.STATE_FADE_OUT;
-        this._object.style.color = "#0000";
+        this._doFadeOut();
         setTimeout(()=>{
             this._state = FadingTextChanger.STATE_FADE_IN;
             this._currentValue = this._targetValue
-            this._object.innerText = this._targetValue;
+            this._doSetValue(this._targetValue);
             this._targetValue = null;
-            this._object.style.color = "";
+            this._doFadeIn();
             setTimeout(()=>{
                 if (this._targetValue == null) {
                     // No second transition needed
@@ -67,6 +71,90 @@ class FadingTextChanger {
                 }
             }, this._fadeDuration);
         }, this._fadeDuration);
+    }
+    _doFadeOut() {}
+    _doSetValue(newValue) {}
+    _doFadeIn() {}
+}
+class FadingOpacityChanger extends FadingChanger {
+    /**
+     * The change listener.
+     * @type {(newValue: *)=>void}
+     */
+    _onChange;
+    /**
+     * Creates a new FadingOpacityChanger.
+     * @param {HTMLElement} object the html object
+     * @param {(newValue: *)=>void} onChange a change listener
+     * @param {number} fadeDuration the fade duration
+     */
+    constructor(object, onChange, fadeDuration) {
+        super(object, fadeDuration);
+        this._onChange = onChange;
+    }
+    _doFadeOut() {
+        this._object.style.opacity = "0";
+    }
+    _doSetValue(newValue) {
+        this._onChange(newValue);
+    }
+    _doFadeIn() {
+        this._object.style.opacity = "";
+    }
+}
+class FadingInvertedOpacityChanger extends FadingChanger {
+    /**
+     * The change listener.
+     * @type {(newValue: *)=>void}
+     */
+    _onChange;
+    /**
+     * Creates a new FadingInvertedOpacityChanger.
+     * @param {HTMLElement} object the html object
+     * @param {(newValue: *)=>void} onChange a change listener
+     * @param {number} fadeDuration the fade duration
+     */
+    constructor(object, onChange, fadeDuration) {
+        super(object, fadeDuration);
+        this._onChange = onChange;
+    }
+    _doFadeOut() {
+        this._object.style.opacity = "";
+    }
+    _doSetValue(newValue) {
+        this._onChange(newValue);
+    }
+    _doFadeIn() {
+        this._object.style.opacity = "0";
+    }
+}
+
+class FadingImageChanger extends FadingOpacityChanger {
+    /**
+     * Creates a new FadingImageChanger.
+     * @param {HTMLImageElement} object the html object
+     * @param {number} fadeDuration the fade duration
+     */
+    constructor(object, fadeDuration) {
+        super(object, (newValue)=> {
+            this._object.src = newValue;
+        }, fadeDuration);
+        object.onload = ()=>{object.style.opacity = "";}
+        object.onerror = ()=>{object.style.opacity = "0";}
+    }
+}
+class FadingTextChanger extends FadingChanger {
+    constructor(object, fadeDuration) {
+        super(object, fadeDuration);
+    }
+    _doFadeOut() {
+        this._object.style.color = "#0000";
+    }
+    _doSetValue(newValue) {
+        this._object.textContent = newValue;
+    }
+    _doFadeIn() {
+        this._object.style.color = "";
     }
 }
 /**
@@ -218,7 +306,7 @@ const UIManager = {
             // Deselect the previously selected page
             if (this._currentPageObject != null) this._currentPageObject.deselect();
             console.log("Requesting default page");
-            Connection.sendPacket(new ClientChangePagePacket(null));
+            Hibiscus.getCurrentServerConnection().sendPacket(new ClientChangePagePacket(null));
         } else {
             // Don't request the current page again
             if (this._currentPageId == pageId) return;
@@ -236,7 +324,7 @@ const UIManager = {
             page.select();
             this._requestPageHistory.push({page:page,pageId:pageId});
             this.showPageLoader(()=>{
-                Connection.sendPacket(new ClientChangePagePacket(pageId));
+                Hibiscus.getCurrentServerConnection().sendPacket(new ClientChangePagePacket(pageId));
             });
         }
     },

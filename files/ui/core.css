@@ -1,4 +1,40 @@
+.hide {display: none;}
+.flex_grow {flex-grow: 1}
+.btn-normal {
+    height: 35px;
+    width: 80px;
+}
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background-color: var(--primary);
+    color: var(--text);
+    font-weight: 600;
+}
+.btn:hover {
+    cursor: pointer;
+    background-color: var(--secondary);
+    transition: right .09s ease-in;
+    color: var(--text);
+}
+hr {
+    color: var(--text);
+}
 :root {
+    --backgroundBrighter: #3a3a3a;
+    --background: #1e2220;
+    --backgroundDarker: #151716;
+    --backgroundEvenDarker: #090a0a;
+    --primary: #ffae00;
+    --secondary: #c08302;
+    --text: #efefef;
+    --textHover: #c6c4c4;
+    --textDisabled: #8d8d8d;
+    --link: var(--primary);
+    --green: #1ab920;
+
     --colors_bright_red: hsl(0, 88%, 42%);
     --colors_bright_orange: hsl(27, 89%, 48%);
     --colors_bright_yellow: hsl(49, 89%, 48%);
@@ -19,6 +55,31 @@
     --colors_dark_magenta: hsl(315, 82%, 33%);
     --colors_dark_gray: hsl(0, 0%, 25%);
 }
+@keyframes rotate {
+    0%{
+        transform: rotate(0deg);
+    }
+    100%{
+        transform: rotate(360deg);
+    }
+}
+
+html {width: 100%; height: 100%;}
+
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+
+    font-family: "Roboto";
+    font-weight: 400;
+    color: var(--text);
+    background-color: var(--background);
+}
+
 @keyframes rgb {
     0% {background-color: hsl(0, 100%, 50%);}
     16% {background-color: hsl(60, 100%, 50%);}
@@ -27,4 +88,26 @@
     66% {background-color: hsl(240, 100%, 50%);}
     83% {background-color: hsl(300, 100%, 50%);}
     100% {background-color: hsl(360, 100%, 50%);}
+}
+.loading {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    transition: opacity 0.5s ease;
+}
+.loading::before {
+    content: '';
+    width: 50px;
+    height: 50px;
+    border: 3px solid #eee;
+    border-radius: 50px;
+    border-top-color: transparent;
+    border-left-color: transparent;
+    position: relative;
+    left: calc(50% - 25px);
+    top: calc(50% - 25px);
+    animation: rotate 1s linear infinite;
 }
