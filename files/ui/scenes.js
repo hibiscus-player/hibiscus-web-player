@@ -6,7 +6,7 @@ class SceneManager {
     _selectorScene;
     /**
      * The main server scene.
-     * @type {Scene}
+     * @type {ServerScene}
      */
     _serverScene;
 
@@ -17,7 +17,7 @@ class SceneManager {
     _selectedScene;
     constructor() {
         this._selectorScene = new SelectorScene(document.querySelector("scene#selector"));
-        this._serverScene = new Scene(document.querySelector("scene#server"));
+        this._serverScene = new ServerScene(document.querySelector("scene#server"));
         
         this._selectedScene = this._selectorScene;
         window.onresize = ()=>{
@@ -151,8 +151,21 @@ class SelectorScene extends Scene {
         }
     }
 }
-class SignInButton {
-    _object;
-    _clickHandler;
-
+class ServerScene extends Scene {
+    _installDesktopObject;
+    /**
+     * Creates a new ServerScene object.
+     * @param {HTMLElement} sceneRoot the scene root element
+     */
+    constructor(sceneRoot) {
+        super(sceneRoot);
+        this._installDesktopObject = this._sceneRoot.querySelector("#install_desktop");
+    }
+    setInstallDesktop(value) {
+        if (value) {
+            this._installDesktopObject.style.display = "";
+        } else {
+            this._installDesktopObject.style.display = "none";
+        }
+    }
 }

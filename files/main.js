@@ -426,6 +426,8 @@ class SelfUserManager {
 
         this._server_name_fader = new FadingTextChanger(document.querySelector("#self_user_data #user_name"));
         this._server_icon_fader = new FadingImageChanger(document.querySelector("#self_user_data #user_icon"));
+
+        Hibiscus.getSceneManager().getServerScene().setInstallDesktop(!this._isMobile);
         
         firebaseData.init((user)=>{
             if (user != null) {
