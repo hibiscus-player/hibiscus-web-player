@@ -466,25 +466,20 @@ class SelfUserManager {
         return this._profileId;
     }
     async performIdentityCheck(serverKey) {
-        let resolve;
-        let reject;
-        let promise = new Promise((resolved, rejected)=>{
-            resolve = resolved;
-            reject = rejected;
-        });
+        let promise = new LazyPromise();
         let xhr = new XMLHttpRequest();
         xhr.open("POST", Hibiscus.CORE_URL + "/api/v1/joinServer");
         xhr.setRequestHeader("Authorization", this._accessToken);
         xhr.setRequestHeader("X-Server-Key", serverKey);
         xhr.onerror = (e)=>{
-            reject(e);
+            promise.reject(e);
         };
         xhr.onload = ()=>{
-            if (xhr.status == 200) resolve(JSON.parse(xhr.responseText));
-            else reject(null);
+            if (xhr.status == 200) promise.resolve(JSON.parse(xhr.responseText));
+            else promise.reject(null);
         }
         xhr.send();
-        return promise;
+        return promise.getPromise();
     }
 }
 class UserData {
@@ -600,15 +595,10 @@ class ServerConnection {
         }
     }
     async login(address) {
-        let resolve;
-        let reject;
-        let promise = new Promise((resolved, rejected)=>{
-            resolve = resolved;
-            reject = rejected;
-        });
-        this._handler = new MainHandler(this, resolve, reject);
+        let lazy = new LazyPromise();
+        this._handler = new MainHandler(this, lazy);
         this._connect(address);
-        return promise;
+        return lazy.getPromise();
     }
     /**
      * Pings the specified server.
@@ -616,15 +606,10 @@ class ServerConnection {
      * @returns {Promise<{ping: string, serverName: string, serverMotd: string}>}
      */
     async ping(address) {
-        let resolve;
-        let reject;
-        let promise = new Promise((resolved, rejected)=>{
-            resolve = resolved;
-            reject = rejected;
-        });
-        this._handler = new PingHandler(this, resolve, reject);
+        let lazy = new LazyPromise();
+        this._handler = new PingHandler(this, lazy);
         this._connect(address);
-        return promise;
+        return lazy.getPromise();
     }
     disconnect() {
         if (this.isConnected()) {
@@ -649,8 +634,12 @@ class PingHandler extends PacketHandler {
      * @type {ServerConnection}
      */
     _connection;
-    _resolve;
-    _reject;
+    /**
+     * The LazyPromise object, that will be completed
+     * when the ping succeeds/fails.
+     * @type {LazyPromise}
+     */
+    _lazyPromise;
 
     /**
      * The server name, if known. Otherwise, this variable will be `null`.
@@ -670,14 +659,12 @@ class PingHandler extends PacketHandler {
     /**
      * Creates a new PingHandler.
      * @param {ServerConnection} connection the ServerConnection to use
-     * @param {()=>void} resolve the Promise resolve function
-     * @param {()=>void} reject the Promise reject function
+     * @param {LazyPromise} lazyPromise the LazyPromise to complete
      */
-    constructor (connection, resolve, reject) {
+    constructor(connection, lazyPromise) {
         super();
         this._connection = connection;
-        this._resolve = resolve;
-        this._reject = reject;
+        this._lazyPromise = lazyPromise;
 
         this._serverName = null;
         this._serverMotd = null;
@@ -701,20 +688,20 @@ class PingHandler extends PacketHandler {
     }
     onConnectionTerminate(event) {
         if (this._serverName != null && this._serverMotd != null) {
-            this._resolve({
+            this._lazyPromise.resolve({
                 ping: this._ping,
                 serverName: this._serverName,
                 serverMotd: this._serverMotd,
             });
         } else {
-            this._reject({
+            this._lazyPromise.reject({
                 errorState: ServerState.PING_ERROR,
                 kickReason: packet.kickReason
             });
         }
     }
     onConnectionFail(error) {
-        this._reject({
+        this._lazyPromise.reject({
             errorState: ServerState.PING_FAIL
         });
     }
@@ -734,13 +721,13 @@ class PingHandler extends PacketHandler {
      */
     onKick(packet) {
         if (this._serverName != null && this._serverMotd != null) {
-            this._resolve({
+            this._lazyPromise.resolve({
                 ping: this._ping,
                 serverName: this._serverName,
                 serverMotd: this._serverMotd,
             });
         } else {
-            this._reject({
+            this._lazyPromise.reject({
                 errorState: ServerState.PING_ERROR,
                 kickReason: packet.kickReason
             });
@@ -754,7 +741,7 @@ class PingHandler extends PacketHandler {
         if (packet.data == BigInt(this._ping)) {
             let now = Date.now();
             let actualPing = now - this._ping;
-            this._resolve({
+            this._lazyPromise.resolve({
                 ping: actualPing,
                 serverName: this._serverName,
                 serverMotd: this._serverMotd
@@ -769,13 +756,21 @@ class MainHandler extends PacketHandler {
      * @type {ServerConnection}
      */
     _connection;
-    _resolve;
-    _reject;
-    constructor (connection, resolve, reject) {
+    /**
+     * The LazyPromise object, that will be completed
+     * when the ping succeeds/fails.
+     * @type {LazyPromise}
+     */
+    _lazyPromise;
+    /**
+     * Creates a new PingHandler.
+     * @param {ServerConnection} connection the ServerConnection to use
+     * @param {LazyPromise} lazyPromise the LazyPromise to complete
+     */
+    constructor(connection, lazyPromise) {
         super();
         this._connection = connection;
-        this._resolve = resolve;
-        this._reject = reject;
+        this._lazyPromise = lazyPromise;
     }
     onJoin() {
         let userFlags = ClientHelloPacket.IS_LOGIN_BIT;
@@ -790,13 +785,13 @@ class MainHandler extends PacketHandler {
         this._connection.sendPacket(new ClientHelloPacket(userFlags, profileId));
     }
     onConnectionTerminate() {
-        this._reject({
+        this._lazyPromise.reject({
             error: "terminated",
             code: error.code
         });
     }
     onConnectionFail() {
-        this._reject({
+        this._lazyPromise.reject({
             error: "failed"
         });
     }
@@ -843,7 +838,7 @@ class MainHandler extends PacketHandler {
     onWelcome(packet) {
         this._log(packet);
         UIManager.clearData();
-        this._resolve();
+        this._lazyPromise.resolve();
     }
     /**
      * A handler method for the packet {@link ServerPageListChangePacket}.

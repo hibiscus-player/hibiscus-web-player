@@ -1,3 +1,42 @@
+/**
+ * An utility for completing Promises after initializing them.
+ * Async methods using this class should return the Promise object
+ * obtained by calling getPromise(). To resolve/reject the future,
+ * use the `resolve(value)`/`reject(reason)` method on this class 
+ * respectively.
+ */
+class LazyPromise {
+    /**
+     * The actual Promise.
+     * @type {Promise}
+     */
+    _promise;
+    /**
+     * The resolve() method.
+     * @type {(value: any)=>void}
+     */
+    _resolve;
+    /**
+     * The reject() method.
+     * @type {(reason: any)=>void}
+     */
+    _reject;
+    constructor() {
+        this._promise = new Promise((resolved, rejected)=>{
+            this._resolve = resolved;
+            this._reject = rejected;
+        });
+    }
+    resolve(value) {
+        this._resolve(value);
+    }
+    reject(reason) {
+        this._reject(reason);
+    }
+    getPromise() {
+        return this._promise;
+    }
+}
 class FadingChanger {
     static STATE_READY = 0;
     static STATE_FADE_OUT = 1;
