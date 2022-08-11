@@ -57,7 +57,7 @@ class ServerManager {
      */
     _servers;
     _serverListObject;
-    _serverListAddObject;
+    _serverListLastObject;
     _mainServerConnection;
     /**
      * A list of the currently available ServerConnection objects
@@ -74,7 +74,7 @@ class ServerManager {
     constructor() {
         this._servers = [];
         this._serverListObject = document.querySelector("#selector_server_list");
-        this._serverListAddObject = document.querySelector("#selector_server_add");
+        this._serverListLastObject = document.querySelector("#selector_server_last");
         let addButton = document.querySelector("#selector_server_add_button");
         addButton.onclick = ()=>{
             Hibiscus.getSceneManager().getSelectorScene().openServerEditor("Add Server", "ws://", "Add").then((result)=>{
@@ -83,6 +83,14 @@ class ServerManager {
             }).catch(()=>{
                 // Do not add any server, ignore
             });
+        };
+        let refreshAllButton = document.querySelector("#selector_server_refresh_button");
+        refreshAllButton.onclick = ()=>{
+            for (let server of this._servers) {
+                if (server._state != ServerState.PING_QUEUED && server._state != ServerState.PINGING) {
+                    this.queuePing(server);
+                }
+            }
         };
         this._mainServerConnection = new ServerConnection();
         this._availablePingServerConnections = [];
@@ -155,7 +163,7 @@ class ServerManager {
      * @param {ServerData} serverData the ServerData to register
      */
     _registerServerData(serverData) {
-        this._serverListObject.insertBefore(serverData._rootObject, this._serverListAddObject);
+        this._serverListObject.insertBefore(serverData._rootObject, this._serverListLastObject);
         this._servers.push(serverData);
         this.queuePing(serverData);
     }
