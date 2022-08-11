@@ -40,11 +40,15 @@
                             <div id="selector_user_buttons">
                                 <div class="flex_grow"></div>
                                 <div id="signin_buttons">
-                                    <div id="signin_google" class="signin_button">
-                                        <div id="signin_google_inner">
-                                            <div id="signin_google_image"></div>
-                                            <div id="signin_google_text">Sign in with Google</div>
-                                        </div>
+                                    <div id="signin_google" class="user_button">
+                                        <div class="user_btn_image"></div>
+                                        <div class="user_btn_text">Sign in with Google</div>
+                                    </div>
+                                </div>
+                                <div id="account_buttons" style="display: none">
+                                    <div id="signout" class="user_button">
+                                        <div class="user_btn_image"></div>
+                                        <div class="user_btn_text">Sign out</div>
                                     </div>
                                 </div>
                                 <div class="flex_grow"></div>
@@ -105,16 +109,16 @@
                 <div id="player_bar">
         
                 </div>
-                <script type="module" src="firebase_api.js"></script>
-                <script src="ui/core.js" defer></script>
-                <script src="ui/components.js" defer></script>
-                <script src="ui/pages.js" defer></script>
-                <script src="ui/properties.js" defer></script>
-                <script src="ui/markdown.js" defer></script>
-                <script src="ui/scenes.js" defer></script>
-                <script src="protocol.js" defer></script>
-                <script src="main.js" defer></script>
             </scene>
         </scenes>
+        <script type="module" src="firebase_api.js"></script>
+        <script src="ui/core.js" defer></script>
+        <script src="ui/components.js" defer></script>
+        <script src="ui/pages.js" defer></script>
+        <script src="ui/properties.js" defer></script>
+        <script src="ui/markdown.js" defer></script>
+        <script src="ui/scenes.js" defer></script>
+        <script src="protocol.js" defer></script>
+        <script src="main.js" defer></script>
     </body>
 </html>

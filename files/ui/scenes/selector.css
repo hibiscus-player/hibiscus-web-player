@@ -94,69 +94,61 @@ scene#selector {
 }
 #signin_buttons {
     max-width: max-content;
-}
-.signin_button {
     position: relative;
-    color: white;
-    height: 46px;
+}
+.user_button {
+    position: relative;
+    color: var(--text);
+    height: 40px;
     transition: background-color 0.1s ease;
-    border-radius: 2px;
-}
-.signin_button::after {
-    content: '';
-    position: absolute;
-    left: 3px;
-    top: 3px;
-    right: 3px;
-    bottom: 3px;
-    transition: background-color 0.2s ease;
-    background-color: #6660;
-}
-.signin_button:not(.signin_loading) {
-    cursor: pointer;
-}
-.signin_button.signin_disabled {
-    cursor: not-allowed;
-}
-.signin_button.signin_disabled::after {
-    background-color: #6667;
-}
-#signin_google:hover {
-    background-color: #4284F24D;
-}
-#signin_google_inner {
-    position: relative;
-    left: 0;
-    right: 0;
-    top: 3px;
-    height: calc(100% - 6px);
+    border-radius: 8px;
+    box-shadow: 0px 0px 3px 0px black;
     margin: 3px;
-    border-radius: 2px;
-    background-color: #4285F4;
-    transition: background-color 0.1s ease;
     display: flex;
 }
-#signin_google.pressed #signin_google_inner {
-    background-color: #3367D6;
+.user_button::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    background-color: #0000;
 }
-#signin_google_image {
-    background-image: url(../../assets/signin/btn_google_dark_normal_ios.svg);
+.user_button:not(.signin_loading) {
+    cursor: pointer;
+}
+.user_button.signin_disabled {
+    cursor: not-allowed;
+}
+.user_button.signin_disabled::after {
+    background-color: #6667;
+}
+.user_button:not(.signin_disabled):not(.signin_loading):hover::after {
+    background-color: #fff7;
+}
+.user_btn_image {
+    width: 40px;
+    height: 40px;
     position: relative;
-    left: -3px;
-    top: -3px;
-    width: 46px;
-    height: 46px;
+    display: flex;
 }
-#signin_google.pressed #signin_google_image {
-    background-image: url(../../assets/signin/btn_google_dark_pressed_ios.svg);
+.user_btn_image::after {
+    content: '';
+    margin: auto;
+    width: 15px;
+    height: 15px;
+    color: white;
 }
-#signin_google_text {
+.user_btn_text {
     font-family: 'Roboto';
     position: relative;
-    left: -3px;
+    left: 0px;
     right: 0px;
     height: 40px;
-    margin: 0px 10px;
+    margin: 0px 15px 0px 0px;
     display: flex;
     flex-grow: 1;
     text-align: center;
@@ -164,6 +156,21 @@ scene#selector {
     align-items: center;
     user-select: none;
     min-width: max-content;
+}
+
+#signin_google {
+    background-color: #ea4335;
+}
+#signin_google .user_btn_image::after {
+    background-image: url(../../assets/google_g.svg);
+}
+#signout {
+    background-color: var(--colors_dark_red);
+}
+#signout .user_btn_image::after {
+    background-image: url(../../assets/logout.svg);
+    width: 25px;
+    height: 25px;
 }
 .signin_loading {
     color: #0000 !important;

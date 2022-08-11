@@ -85,7 +85,9 @@ class SelectorScene extends Scene {
     _userObject;
     _userDataObject;
     _userSeparatorObject;
+    _userButtonsObject;
     _signInButtonsObject;
+    _accountButtonsObject;
     _selectedLogin;
 
     _editorObject;
@@ -115,11 +117,20 @@ class SelectorScene extends Scene {
         this._userObject = this._sceneRoot.querySelector("#selector_user");
         this._userDataObject = this._sceneRoot.querySelector("#selector_user_data");
         this._userSeparatorObject = this._sceneRoot.querySelector("#selector_user_separator");
+        this._userButtonsObject = this._sceneRoot.querySelector("#selector_user_buttons");
+        // Sign-in Buttons
         this._signInButtonsObject = this._sceneRoot.querySelector("#signin_buttons");
         let google = this._signInButtonsObject.querySelector("#signin_google");
         google.onclick = ()=>{
             this._startLogin(google);
         };
+        // Account Buttons
+        this._accountButtonsObject = this._sceneRoot.querySelector("#account_buttons");
+        let signout = this._accountButtonsObject.querySelector("#signout");
+        signout.onclick = ()=>{
+            firebaseData.firebaseAuth.signOut();
+        };
+
         this._editorObject = this._sceneRoot.querySelector("#selector_editor");
         this._editorTitleObject = this._sceneRoot.querySelector("#selector_editor_title");
         this._editorAddressInput = this._sceneRoot.querySelector("#selector_editor_address");
@@ -214,8 +225,10 @@ class SelectorScene extends Scene {
     setSignedIn(value) {
         if (value) {
             this._signInButtonsObject.style.display = "none";
+            this._accountButtonsObject.style.display = "";
         } else {
             this._signInButtonsObject.style.display = "";
+            this._accountButtonsObject.style.display = "none";
         }
         this.checkSize();
     }
@@ -236,7 +249,7 @@ class SelectorScene extends Scene {
         }
     }
     checkSize() {
-        let sum = this._userDataObject.clientWidth + this._signInButtonsObject.clientWidth + 40;
+        let sum = this._userDataObject.clientWidth + this._userButtonsObject.clientWidth + 40;
         if (this._userObject.clientWidth > sum) {
             this._userObject.classList.remove("vertical");
         } else {
