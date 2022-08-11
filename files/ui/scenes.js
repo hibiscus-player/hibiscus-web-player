@@ -23,6 +23,9 @@ class SceneManager {
         window.onresize = ()=>{
             this._selectedScene.onResize();
         };
+        window.onkeyup = (e)=>{
+            this._selectedScene.onKeyUp(e);
+        }
     }
     getSelectorScene() {
         return this._selectorScene;
@@ -71,6 +74,11 @@ class Scene {
         return this._sceneRoot;
     }
     onResize() {}
+    /**
+     * Handles a keyboard up event.
+     * @param {KeyboardEvent} event the keyboard event
+     */
+    onKeyUp(event) {}
 }
 class SelectorScene extends Scene {
     _loader;
@@ -131,7 +139,7 @@ class SelectorScene extends Scene {
      * @returns {Promise<{address: string}>} the edit result
      */
     async openServerEditor(title, address, completeButtonText) {
-        if (this._editorPromise != null) {
+        if (this._isEditorOpen()) {
             return Promise.reject("Editor already open.");
         }
         this._editorPromise = new LazyPromise();
@@ -147,21 +155,26 @@ class SelectorScene extends Scene {
         }, 1);
         return this._editorPromise.getPromise();
     }
+    _isEditorOpen() {
+        return this._editorPromise != null;
+    }
     _completeEditor() {
+        if (!this._isEditorOpen()) return;
         this._editorPromise.resolve({
             address: this._editorAddressInput.value
         });
         this._finishEditor();
     }
     _cancelEditor(reason) {
+        if (!this._isEditorOpen()) return;
         this._editorPromise.reject(reason);
         this._finishEditor();
     }
     _finishEditor() {
         this._editorObject.style.opacity = "0";
+        this._editorPromise = null;
         setTimeout(()=>{
             this._editorObject.style.display = "none";
-            this._editorPromise = null;
         }, 200);
     }
     _startLogin(selectedLogin) {
@@ -208,6 +221,19 @@ class SelectorScene extends Scene {
     }
     onResize() {
         this.checkSize();
+    }
+    /**
+     * Handles a keyboard up event.
+     * @param {KeyboardEvent} event the keyboard event
+     */
+    onKeyUp(event) {
+        if (this._isEditorOpen()) {
+            if (event.key == "Escape") {
+                this._cancelEditor("closed with ESC");
+            } else if (event.key == "Enter") {
+                this._completeEditor();
+            }
+        }
     }
     checkSize() {
         let sum = this._userDataObject.clientWidth + this._signInButtonsObject.clientWidth + 40;
