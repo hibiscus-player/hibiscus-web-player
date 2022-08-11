@@ -88,6 +88,7 @@ class SelectorScene extends Scene {
      */
     _editorAddressInput;
     _editorCompleteButtonObject;
+    _editorCloseButtonObject;
     /**
      * The current editor LazyPromise object, or null if
      * the editor is not open currently.
@@ -118,6 +119,10 @@ class SelectorScene extends Scene {
         this._editorCompleteButtonObject.onclick = ()=>{
             this._completeEditor();
         };
+        this._editorCloseButtonObject = this._sceneRoot.querySelector("#selector_editor_close_button");
+        this._editorCloseButtonObject.onclick = ()=>{
+            this._cancelEditor("closed with X");
+        };
     }
     /**
      * Opens the server editor.
@@ -138,6 +143,7 @@ class SelectorScene extends Scene {
         this._editorObject.style.display = "";
         setTimeout(()=>{
             this._editorObject.style.opacity = "";
+            this._editorAddressInput.focus();
         }, 1);
         return this._editorPromise.getPromise();
     }
@@ -147,7 +153,7 @@ class SelectorScene extends Scene {
         });
         this._finishEditor();
     }
-    _escapeEditor(reason) {
+    _cancelEditor(reason) {
         this._editorPromise.reject(reason);
         this._finishEditor();
     }
