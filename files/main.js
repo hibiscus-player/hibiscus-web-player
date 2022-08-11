@@ -57,6 +57,7 @@ class ServerManager {
      */
     _servers;
     _serverListObject;
+    _serverListAddObject;
     _mainServerConnection;
     /**
      * A list of the currently available ServerConnection objects
@@ -72,7 +73,17 @@ class ServerManager {
     _pingQueue;
     constructor() {
         this._servers = [];
-        this._serverListObject = document.querySelector("div#selector_server_list");
+        this._serverListObject = document.querySelector("#selector_server_list");
+        this._serverListAddObject = document.querySelector("#selector_server_add");
+        let addButton = document.querySelector("#selector_server_add_button");
+        addButton.onclick = ()=>{
+            Hibiscus.getSceneManager().getSelectorScene().openServerEditor("Add Server", "ws://", "Add").then((result)=>{
+                let serverData = new ServerData(this, result.address, "Server");
+                this._registerServerData(serverData);
+            }).catch(()=>{
+                // Do not add any server, ignore
+            });
+        };
         this._mainServerConnection = new ServerConnection();
         this._availablePingServerConnections = [];
         this._pingQueue = [];
@@ -129,9 +140,7 @@ class ServerManager {
         }
         for (let serialized of serializedArray) {
             let sd = ServerData.deserialize(this, serialized);
-            this._serverListObject.appendChild(sd._rootObject);
-            this._servers.push(sd);
-            this.queuePing(sd);
+            this._registerServerData(sd);
         }
     }
     saveLocalStorage() {
@@ -140,6 +149,15 @@ class ServerManager {
             array.push(server.serialize());
         }
         localStorage.setItem("servers", JSON.stringify(array));
+    }
+    /**
+     * Registers the specified ServerData.
+     * @param {ServerData} serverData the ServerData to register
+     */
+    _registerServerData(serverData) {
+        this._serverListObject.insertBefore(serverData._rootObject, this._serverListAddObject);
+        this._servers.push(serverData);
+        this.queuePing(serverData);
     }
     /**
      * Removes a server from the server list.
@@ -577,7 +595,14 @@ class ServerConnection {
     _connect(address) {
         if (this._handler == null) throw new Error("Cannot connect without a handler set.");
         if (this._websocket != null) this.disconnect();
-        this._websocket = new WebSocket(address);
+        try {
+            this._websocket = new WebSocket(address);
+        } catch (error) {
+            // An error might get thrown if the address is not valid, handle it here.
+            //TODO make a different error reason about the address being invalid
+            this._handler.onConnectionFail(error);
+            return;
+        }
         this._websocket.binaryType = "arraybuffer";
         this._websocket.onopen = (_) => {
             this._connected = true;

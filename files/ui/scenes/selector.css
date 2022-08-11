@@ -191,6 +191,32 @@ scene#selector {
     height: 100%;
     overflow-y: auto;
 }
+#selector_server_add {
+    height: 100px;
+    display: flex;
+}
+#selector_server_add_button {
+    padding: 10px 15px;
+    box-shadow: 0px 0px 3px 0px #000;
+    margin: auto;
+    background-color: var(--backgroundBrighter);
+    border-radius: 8px;
+    position: relative;
+}
+#selector_server_add_button::after {
+    content: '';
+    border-radius: 8px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    transition: background-color 0.1s ease;
+    background-color: #0000;
+}
+#selector_server_add_button:hover::after {
+    background-color: #eee7;
+}
 .selector_server {
     height: 100px;
     display: flex;
