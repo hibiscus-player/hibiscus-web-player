@@ -57,7 +57,9 @@ window.firebaseData = {
             const token = credential.accessToken;
             // The signed-in user info.
             const user = result.user;
+            console.log("Logged in as user: " + user.uid);
 
+            /**
             console.log("Credential:");
             console.log(credential);
 
@@ -69,6 +71,7 @@ window.firebaseData = {
 
             console.log("Result itself:");
             console.log(result);
+            */
             callback(result.user);
         }).catch((error) => {
             // Handle Errors here.
@@ -78,7 +81,9 @@ window.firebaseData = {
             const email = error.customData.email;
             // The AuthCredential type that was used.
             const credential = GoogleAuthProvider.credentialFromError(error);
-
+            console.log("Failed to login:");
+            console.log(error);
+            /*
             console.log("Error code:");
             console.log(errorCode);
 
@@ -93,6 +98,7 @@ window.firebaseData = {
 
             console.log("Result itself:");
             console.log(error);
+            */
             callback(null);
         });
     }
