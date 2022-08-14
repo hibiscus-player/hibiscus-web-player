@@ -11,7 +11,7 @@ component {
  * Title Box Component
  */
 component.title_box {
-    margin: 15px;
+    padding: 15px;
     height: 200px;
     transition: background-color 0.5s ease;
     display: flex;
