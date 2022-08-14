@@ -11,22 +11,44 @@ component {
  * Title Box Component
  */
 component.title_box {
-    height: 150px;
+    margin: 15px;
+    height: 200px;
     transition: background-color 0.5s ease;
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+}
+component.title_box::before {
+    content: '';
+    flex-grow: 1;
+}
+component.title_box::after {
+    content: '';
+    flex-grow: 1;
 }
 component.title_box span {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-
     transition: background-color 0.2s ease, color 0.2s ease;
-    display: flex;
+    display: inline;
     align-items: center;
     justify-content: center;
+    width: 100%;
+}
+component.title_box .title {
     font-size: 4em;
     font-weight: 500;
+}
+component.title_box .subtitle {
+    font-size: 2em;
+    font-weight: 400;
+}
+component.title_box.left_aligned span {
+    text-align: left;
+}
+component.title_box.center_aligned span {
+    text-align: center;
+}
+component.title_box.right_aligned span {
+    text-align: right;
 }
 
 /*

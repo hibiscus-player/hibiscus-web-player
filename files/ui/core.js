@@ -92,12 +92,20 @@ class FadingChanger {
         this._currentValue = newValue;
         this._doSetValue(newValue);
     }
+    blink() {
+        if (this._currentValue == null) return;
+
+        if (this._state == FadingTextChanger.STATE_READY) {
+            this._targetValue = this._currentValue;
+            this._doFade();
+        }
+    }
     _doFade() {
         this._state = FadingTextChanger.STATE_FADE_OUT;
         this._doFadeOut();
         setTimeout(()=>{
             this._state = FadingTextChanger.STATE_FADE_IN;
-            this._currentValue = this._targetValue
+            this._currentValue = this._targetValue;
             this._doSetValue(this._targetValue);
             this._targetValue = null;
             this._doFadeIn();
@@ -183,14 +191,20 @@ class FadingImageChanger extends FadingOpacityChanger {
     }
 }
 class FadingTextChanger extends FadingChanger {
-    constructor(object, fadeDuration) {
+    /**
+     * The change listener.
+     * @type {(newValue: *)=>void}
+     */
+    _onChange;
+    constructor(object, fadeDuration, onChange=(value)=>{this._object.textContent = value;}) {
         super(object, fadeDuration);
+        this._onChange = onChange;
     }
     _doFadeOut() {
         this._object.style.color = "#0000";
     }
     _doSetValue(newValue) {
-        this._object.textContent = newValue;
+        this._onChange(newValue);
     }
     _doFadeIn() {
         this._object.style.color = "";

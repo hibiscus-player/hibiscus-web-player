@@ -15,8 +15,8 @@ class UIProperty {
         this.setValue(this.deserialize(reader));
     }
     setValue(value) {
+        this._changeHandler(this._value, value);
         this._value = value;
-        this._changeHandler(value);
     }
 }
 class BooleanProperty extends UIProperty {
@@ -61,6 +61,25 @@ class ColorProperty extends UIProperty {
             let blue = reader.readUint8();
             return "rgba(" + red + ", " + green + ", " + blue + ", " + (alpha/255) + ")";
         }
+    }
+}
+class EnumProperty extends UIProperty {
+    _values;
+    constructor(propertyId, defaultValue, changeHandler, values) {
+        super(propertyId, defaultValue, changeHandler);
+        this._values = values;
+    }
+    deserialize(reader) {
+        let ordinal;
+        if (this._values.length < 256) {
+            ordinal = reader.readUint8();
+        } else if (this._values.length < 65536) {
+            ordinal = reader.readUint16();
+        } else {
+            ordinal = reader.readUint32();
+        }
+        if (ordinal == -1) return null;
+        return this._values[ordinal];
     }
 }
 class FloatProperty extends UIProperty {
