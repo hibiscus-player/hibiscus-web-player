@@ -830,8 +830,7 @@ class MainHandler extends PacketHandler {
     }
     onConnectionTerminate() {
         this._lazyPromise.reject({
-            error: "terminated",
-            code: error.code
+            error: "terminated"
         });
     }
     onConnectionFail() {
