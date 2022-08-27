@@ -14,6 +14,9 @@ class UIProperty {
     deserializeAndSet(reader) {
         this.setValue(this.deserialize(reader));
     }
+    getValue() {
+        return this._value;
+    }
     setValue(value) {
         this._changeHandler(this._value, value);
         this._value = value;

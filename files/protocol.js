@@ -442,50 +442,42 @@ class ClientChangePagePacket extends ClientPacket {
 }
 class ClientPageActionPacket extends ClientPacket {
     /**
-     * The ID of the component this action is being performed on.
+     * The client action.
+     * @type {ClientAction}
+     */
+    action;
+    /**
+     * The value being sent to the server.
+     * @type {*}
+     */
+    value;
+    /**
+     * The size of the value.
      * @type {number}
      */
-    componentId;
-    /**
-     * The ID of the action that is being performed.
-     * @type {number}
-     */
-    actionId;
-    /**
-     * The size of the data being sent. (in bytes)
-     * @type {number}
-     */
-    dataLength;
-    /**
-     * A function to serialize the action data.
-     * @type {(data: DataViewWriter)=>void | null}
-     */
-    dataFunction;
+    size;
     /**
      * 
-     * @param {number} componentId the id of the source component
-     * @param {number} actionId the id of the action
-     * @param {number} dataLength the size of the data
-     * @param {(data: DataViewWriter)=>void | null} dataFunction 
+     * @param {ClientAction} action the client action
+     * @param {*} value the value to send to the server
      */
-    constructor(componentId, actionId, dataLength, dataFunction) {
+    constructor(action, value) {
         super();
-        this.componentId = componentId;
-        this.actionId = actionId;
-        this.dataLength = dataLength;
-        this.dataFunction = dataFunction;
+        this.action = action;
+        this.value = value;
+        this.size = action.size(value);
     }
     _compressImpl(data) {
-        data.writeUint32(this.componentId);
-        data.writeUint16(this.actionId);
-        data.writeUint32(this.dataLength);
-        if (this.dataFunction != null) this.dataFunction(data);
+        data.writeUint32(this.action.getComponent().getComponentID());
+        data.writeUint16(this.action.getClientActionId());
+        data.writeUint32(this.size);
+        this.action.serialize(data, this.value);
     }
     dataSize() {
         return DataSizes.UINT32 + // component ID
                 DataSizes.UINT16 + // action ID
                 DataSizes.UINT32 + // data size
-                this.dataLength;
+                this.size;
     }
     packetId() {
         return 4;

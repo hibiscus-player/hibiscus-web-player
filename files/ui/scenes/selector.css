@@ -360,18 +360,7 @@ scene#selector {
     margin-top: 10px;
 }
 #selector_editor_address {
-    font-size: 1.3em;
-    background-color: var(--backgroundDarker);
-    color: var(--text);
-    border: 1px solid #666;
-    border-color: #666;
-    transition: border-color 0.2s ease;
-    border-radius: 8px;
-    padding: 10px;
     text-align: center;
-    width: 400px;
-    max-width: 90%;
-    margin: 10px;
 }
 #selector_editor_address:focus {
     border-color: var(--primary);

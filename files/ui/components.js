@@ -1,12 +1,36 @@
 class UIComponent {
+    /**
+     * The id of this component.
+     * @type {number}
+     */
     _componentID;
+    /**
+     * The properties of this component.
+     * @type {Array<UIProperty>}
+     */
     _properties;
+    /**
+     * The root object of this component.
+     * @type {HTMLElement}
+     */
     _rootObject;
+    /**
+     * The client action list.
+     * @type {Array<ClientAction>}
+     */
+    _clientActions;
+    /**
+     * The server action list.
+     * @type {Array<ServerAction>}
+     */
+    _serverActions;
     constructor(componentID) {
         this._componentID = componentID;
         this._properties = [];
         this._rootObject = document.createElement("component");
         this._rootObject.classList.add(this.getComponentType());
+        this._clientActions = [];
+        this._serverActions = [];
     }
     getComponentType() {
         return "";
@@ -79,6 +103,37 @@ class UIComponent {
         let prop = new ThemeColorProperty(this._properties.length, defaultValue, changeHandler);
         this._properties.push(prop);
         return prop;
+    }
+
+    voidClientAction() {
+        let action = new VoidClientAction(this, this._clientActions.length);
+        this._clientActions.push(action);
+        return action;
+    }
+    stringClientAction() {
+        let action = new StringClientAction(this, this._clientActions.length);
+        this._clientActions.push(action);
+        return action;
+    }
+
+    getServerAction(id) {
+        return this._serverActions[id];
+    }
+    /**
+     * @param {null|(value:*)=>void} handler an optional handler to use 
+     */
+    voidServerAction(handler=null) {
+        let action = new VoidServerAction(this._serverActions.length, handler);
+        this._serverActions.push(action);
+        return action;
+    }
+    /**
+     * @param {null|(value:*)=>void} handler an optional handler to use 
+     */
+    stringServerAction(handler=null) {
+        let action = new StringServerAction(this._serverActions.length, handler);
+        this._serverActions.push(action);
+        return action;
     }
 }
 class TitleBoxComponent extends UIComponent {
@@ -198,6 +253,7 @@ class ButtonComponent extends UIComponent {
     buttonTextFader;
     buttonObject;
     color;
+    onclick;
     constructor(componentID) {
         super(componentID);
         this.buttonObject = document.createElement("span");
@@ -213,11 +269,78 @@ class ButtonComponent extends UIComponent {
             this._rootObject.style.backgroundColor = newValue;
         });
         
+        this.onclick = this.voidClientAction();
         this._rootObject.onclick = (e)=>{
-            Hibiscus.getCurrentServerConnection().sendPacket(new ClientPageActionPacket(this.getComponentID(), 0, 0, null));
+            this.onclick.send();
         };
     }
     getComponentType() {
         return ButtonComponent.COMPONENT_TYPE;
+    }
+}
+class TextInputComponent extends UIComponent {
+    static COMPONENT_TYPE = "text_input";
+    textObject;
+
+    defaultValue;
+    updateEvents;
+    typeTimeoutId;
+
+    oninputchange;
+    constructor(componentID) {
+        super(componentID);
+        this.textObject = document.createElement("input");
+        this.textObject.type = "text";
+        this.textObject.classList.add("textInput");
+        this.textObject.innerText = "Button";
+        this.textObject.oninput = (e)=>{
+            this._oninput();
+        };
+        this._rootObject.appendChild(this.textObject);
+
+        this.typeTimeoutId = null;
+        this.textObject.onkeyup = (e)=>{
+            if (e.key == "Enter") {
+                if (this.updateEvents.getValue() != TextInputComponent.UpdateEventType.EVERY_KEY) {
+                    this._sendUpdate();
+                }
+            }
+        };
+        this.textObject.onblur = (e)=>{
+            if (this.updateEvents.getValue() != TextInputComponent.UpdateEventType.EVERY_KEY) {
+                this._sendUpdate();
+            }
+        };
+        this.defaultValue = this._stringProperty("", (oldValue, newValue) => {
+            if (oldValue == null) this.textObject.value = newValue;
+        });
+        this.updateEvents = this._enumProperty(TextInputComponent.UpdateEventType.AFTER_CHANGE, TextInputComponent.UpdateEventType.VALUES, (oldValue, newValue)=>{});
+        
+        this.oninputchange = this.stringClientAction();
+    }
+    _queueTimeout() {
+        if (this.typeTimeoutId != null) clearTimeout(this.typeTimeoutId);
+        this.typeTimeoutId = setTimeout(this._sendUpdate, 1000);
+    }
+    _sendUpdate() {
+        if (this.typeTimeoutId != null) clearTimeout(this.typeTimeoutId);
+        this.oninputchange.send(this.textObject.value);
+    }
+    _oninput() {
+        if (this.updateEvents.getValue() == TextInputComponent.UpdateEventType.EVERY_KEY) {
+            this.oninputchange.send(this.textObject.value);
+        } else if (this.updateEvents.getValue() == TextInputComponent.UpdateEventType.AFTER_CHANGE_TIMEOUT) {
+            this._queueTimeout();
+        }
+    }
+    getComponentType() {
+        return TextInputComponent.COMPONENT_TYPE;
+    }
+    static UpdateEventType = class {
+        static EVERY_KEY = new this();
+        static AFTER_CHANGE = new this();
+        static AFTER_CHANGE_TIMEOUT = new this();
+        static VALUES = [this.EVERY_KEY, this.AFTER_CHANGE, this.AFTER_CHANGE_TIMEOUT];
+        constructor() {}
     }
 }
