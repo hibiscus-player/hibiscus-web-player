@@ -302,11 +302,7 @@ const UIManager = {
         this._pageObject = document.getElementById("mainPage");
 
         // Initialize the component registry
-        this._COMPONENT_TYPES[TitleBoxComponent.COMPONENT_TYPE] = (componentId)=>new TitleBoxComponent(componentId);
-        this._COMPONENT_TYPES[TextBoxComponent.COMPONENT_TYPE] = (componentId)=>new TextBoxComponent(componentId);
-        this._COMPONENT_TYPES[ButtonComponent.COMPONENT_TYPE] = (componentId)=>new ButtonComponent(componentId);
-        this._COMPONENT_TYPES[TextInputComponent.COMPONENT_TYPE] = (componentId)=>new TextInputComponent(componentId);
-        this._COMPONENT_TYPES[BlockLayoutComponent.COMPONENT_TYPE] = (componentId)=>new BlockLayoutComponent(componentId);
+        UIComponent.registerAll(this._COMPONENT_TYPES);
     },
     /**
      * Shows the UI loading screen. This covers the page list

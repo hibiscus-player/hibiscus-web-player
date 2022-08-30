@@ -175,6 +175,14 @@ class UIComponent {
         this._serverActions.push(action);
         return action;
     }
+
+    static registerAll(registry) {
+        registry[TitleBoxComponent.COMPONENT_TYPE] = (componentId)=>new TitleBoxComponent(componentId);
+        registry[TextBoxComponent.COMPONENT_TYPE] = (componentId)=>new TextBoxComponent(componentId);
+        registry[ButtonComponent.COMPONENT_TYPE] = (componentId)=>new ButtonComponent(componentId);
+        registry[TextInputComponent.COMPONENT_TYPE] = (componentId)=>new TextInputComponent(componentId);
+        registry[BlockLayoutComponent.COMPONENT_TYPE] = (componentId)=>new BlockLayoutComponent(componentId);
+    }
 }
 class UIContainer extends UIComponent {
     _children;
