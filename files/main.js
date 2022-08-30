@@ -466,26 +466,31 @@ class SelfUserManager {
 
         Hibiscus.getSceneManager().getServerScene().setInstallDesktop(!this._isMobile);
         
-        firebaseData.init((user)=>{
-            if (user != null) {
-                this._name = user.displayName;
-                this._icon_url = user.photoURL;
-                this._profileId = user.uid;
-                this._accessToken = user.accessToken;
-            } else {
-                this._name = "Guest";
-                this._icon_url = SelfUserManager.GUEST_ICON_URL;
-                this._profileId = null;
-            }
+        if (window.firebaseData) window.firebaseData.init(user=>this._initUser(user));
+        else {
+            console.error("Firebase is not available! Using offline mode...");
+            this._initUser(null); 
+        }
+    }
+    _initUser(user) {
+        if (user != null) {
+            this._name = user.displayName;
+            this._icon_url = user.photoURL;
+            this._profileId = user.uid;
+            this._accessToken = user.accessToken;
+        } else {
+            this._name = "Guest";
+            this._icon_url = SelfUserManager.GUEST_ICON_URL;
+            this._profileId = null;
+        }
 
-            this._selector_name_fader.changeTo(this._name);
-            this._selector_icon_fader.changeTo(this._icon_url);
-            this._server_name_fader.changeTo(this._name);
-            this._server_icon_fader.changeTo(this._icon_url);
+        this._selector_name_fader.changeTo(this._name);
+        this._selector_icon_fader.changeTo(this._icon_url);
+        this._server_name_fader.changeTo(this._name);
+        this._server_icon_fader.changeTo(this._icon_url);
 
-            Hibiscus.getSceneManager().getSelectorScene().setSignedIn(user != null);
-            Hibiscus.getSceneManager().getSelectorScene().setLoaderVisible(false);
-        });
+        Hibiscus.getSceneManager().getSelectorScene().setSignedIn(user != null);
+        Hibiscus.getSceneManager().getSelectorScene().setLoaderVisible(false);
     }
     isGuest() {
         return this._profileId == null;
