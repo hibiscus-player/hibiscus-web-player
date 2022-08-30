@@ -5,6 +5,24 @@ class UIComponent {
      */
     _componentID;
     /**
+     * The parent of this component.
+     * @type {UIContainer}
+     */
+    _parent;
+    /**
+     * The ID of the parent component.
+     * When a new component with a parent
+     * is sent to the client, this will be
+     * used to link the objects.
+     * @type {number}
+     */
+    _parentId;
+    /**
+     * The child index in the parent component.
+     * @type {number}
+     */
+    _childIndex;
+    /**
      * The properties of this component.
      * @type {Array<UIProperty>}
      */
@@ -26,6 +44,9 @@ class UIComponent {
     _serverActions;
     constructor(componentID) {
         this._componentID = componentID;
+        this._parent = null;
+        this._parentId = -1;
+        this._childIndex = -1;
         this._properties = [];
         this._rootObject = document.createElement("component");
         this._rootObject.classList.add(this.getComponentType());
@@ -40,6 +61,25 @@ class UIComponent {
     }
     getComponentID() {
         return this._componentID;
+    }
+    getParent() {
+        return this._parent;
+    }
+    getParentId() {
+        return this._parentId;
+    }
+    syncParent(parentId, childIndex) {
+        if (this._parent != null) {
+            this._parent.clearChild(this._childIndex);
+        }
+        this._parentId = parentId;
+        this._childIndex = childIndex;
+    }
+    linkParent(parent) {
+        this._parent = parent;
+    }
+    isParentLinked() {
+        return this._parentId == 0 || this._parent != null;
     }
     /**
      * Returns a property from this component.
@@ -134,6 +174,25 @@ class UIComponent {
         let action = new StringServerAction(this._serverActions.length, handler);
         this._serverActions.push(action);
         return action;
+    }
+}
+class UIContainer extends UIComponent {
+    _children;
+    constructor(componentID) {
+        super(componentID);
+        this._children = [];
+    }
+    _addChild(index, component) {}
+    _removeChild(index, component) {}
+    clearChild(index) {
+        let child = this._children[index];
+        this._children.splice(index, 1);
+        _removeChild(index, child);
+    }
+    setChild(index, component) {
+        if (this._children[index] != null) this._removeChild(index, this._children[index]);
+        this._children[index] = component;
+        this._addChild(index, component);
     }
 }
 class TitleBoxComponent extends UIComponent {
@@ -342,5 +401,21 @@ class TextInputComponent extends UIComponent {
         static AFTER_CHANGE_TIMEOUT = new this();
         static VALUES = [this.EVERY_KEY, this.AFTER_CHANGE, this.AFTER_CHANGE_TIMEOUT];
         constructor() {}
+    }
+} 
+
+class BlockLayoutComponent extends UIContainer {
+    static COMPONENT_TYPE = "block_layout";
+    constructor(componentID) {
+        super(componentID);
+    }
+    getComponentType() {
+        return BlockLayoutComponent.COMPONENT_TYPE;
+    }
+    _addChild(index, component) {
+        this._rootObject.appendChild(component);
+    }
+    _removeChild(index, component) {
+        this._rootObject.removeChild(component);
     }
 }

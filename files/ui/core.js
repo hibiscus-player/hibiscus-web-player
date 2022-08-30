@@ -306,6 +306,7 @@ const UIManager = {
         this._COMPONENT_TYPES[TextBoxComponent.COMPONENT_TYPE] = (componentId)=>new TextBoxComponent(componentId);
         this._COMPONENT_TYPES[ButtonComponent.COMPONENT_TYPE] = (componentId)=>new ButtonComponent(componentId);
         this._COMPONENT_TYPES[TextInputComponent.COMPONENT_TYPE] = (componentId)=>new TextInputComponent(componentId);
+        this._COMPONENT_TYPES[BlockLayoutComponent.COMPONENT_TYPE] = (componentId)=>new BlockLayoutComponent(componentId);
     },
     /**
      * Shows the UI loading screen. This covers the page list
@@ -530,14 +531,28 @@ const UIManager = {
      */
     updatePageData(updatePagePacket) {
         let reader = updatePagePacket.reader;
-        for (let addData of updatePagePacket.addedComponents) {
-            this._addComponent(reader, addData);
+        if (updatePagePacket.addedComponents.length > 0) {
+            let lateUpdate = [];
+            for (let addData of updatePagePacket.addedComponents) {
+                let comp = this._addComponent(reader, addData);
+                if (comp != null && !comp.isParentLinked()) lateUpdate.push(comp);
+            }
+            for (let comp of lateUpdate) {
+                comp.linkParent(this._currentPageObject.getComponent(comp.getParentId()));
+                if (!comp.isParentLinked()) {
+                    console.error("Failed to late-link parent object on component " + comp.getComponentID() + "!")
+                    console.error(comp);
+                }
+            }
         }
         for (let componentID of updatePagePacket.removedComponents) {
             this._removeComponent(componentID);
         }
         for (let updateData of updatePagePacket.updatedProperties) {
             this._updateProperty(reader, updateData);
+        }
+        for (let parentUpdateData of updatePagePacket.parentUpdatedComponents) {
+            this._parentUpdate(parentUpdateData);
         }
 
         if (this._requestPageHistory.length == 0) {
@@ -549,19 +564,24 @@ const UIManager = {
      * Adds a component to the current page from the specified compressed data.
      * This method decompresses the data from the specified DataViewReader.
      * @param {DataViewReader} reader the reader to get data from
-     * @param {{componentId: number, type: string, offset: number}} addData the data about the component
+     * @param {{componentId: number, type: string, offset: number, parentId: number, childIndex: number}} addData the data about the component
+     * @returns {UIComponent|null} a new UIComponent, or null if an unknown component is requested
      */
     _addComponent(reader, addData) {
         if (!this._COMPONENT_TYPES.hasOwnProperty(addData.type)) {
             console.warn("Unknown component \"" + addData.type + "\" requested!");
+            return null;
         } else {
             reader.setOffset(addData.offset);
             let component = this._COMPONENT_TYPES[addData.type](addData.componentId);
+            component.syncParent(addData.parentId, addData.childIndex);
+            component.linkParent(this._currentPageObject.getComponent(component.getParentId()));
             for (let property of component._properties) {
                 property.deserializeAndSet(reader);
             }
             this._currentPageObject.addComponent(component);
             this._pageObject.appendChild(component.getRootObject());
+            return component;
         }
     },
     /**
@@ -593,5 +613,15 @@ const UIManager = {
             reader.setOffset(updateData.offset);
             property.deserializeAndSet(reader);
         }
+    },
+    /**
+     * Adds a component to the current page from the specified compressed data.
+     * This method decompresses the data from the specified DataViewReader.
+     * @param {{componentId: number, parentId: number, childIndex: number}} parentData the data about the component
+     */
+    _parentUpdate(parentData) {
+        let component = this._currentPageObject.getComponent(parentData.componentId);
+        component.syncParent(parentData.parentId, parentData.childIndex);
+        component.linkParent(this._currentPageObject.getComponent(component.getParentId()));
     }
 };

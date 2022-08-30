@@ -768,10 +768,11 @@ class ServerUpdatePagePacket extends ServerPacket {
     static COMPONENTS_ADDED_BIT = 0x01;
     static COMPONENTS_REMOVED_BIT = 0x02;
     static PROPERTIES_UPDATED_BIT = 0x04;
+    static COMPONENT_PARENT_UPDATED_BIT = 0x08;
     /**
      * An array of information about added components.
      * This contains an offset into `reader`.
-     * @type {Array<{componentId: number, type: string, offset: number}>}
+     * @type {Array<{componentId: number, type: string, offset: number, parentId: number, childIndex: number}>}
      */
     addedComponents;
     /**
@@ -786,6 +787,12 @@ class ServerUpdatePagePacket extends ServerPacket {
      */
     updatedProperties;
     /**
+     * An array of information about components whose
+     * parent data has been updated.
+     * @type {Array<{componentId: number, parentId: number, childIndex: number}>}
+     */
+    parentUpdatedComponents;
+    /**
      * The {@link DataViewReader} that was used to create this ServerUpdatePagePacket.
      * @type {DataViewReader}
      */
@@ -798,6 +805,7 @@ class ServerUpdatePagePacket extends ServerPacket {
         this.addedComponents = [];
         this.removedComponents = [];
         this.updatedProperties = [];
+        this.parentUpdatedComponents = [];
         this.reader = data;
         let mask = data.readUint8();
         if ((mask & ServerUpdatePagePacket.COMPONENTS_ADDED_BIT) > 0) {
@@ -805,11 +813,15 @@ class ServerUpdatePagePacket extends ServerPacket {
             for (let i = 0; i < amount; i++) {
                 let componentId = data.readUint32();
                 let typeName = data.readUTF16BEString(data.readUint16());
+                let parentId = data.readUint32();
+                let childIndex = data.readUint32();
                 let dataLength = data.readUint16();
                 let offset = data.getOffset();
                 this.addedComponents.push({
                     componentId: componentId,
                     type: typeName,
+                    parentId: parentId,
+                    childIndex: childIndex,
                     offset: offset
                 });
                 data.skip(dataLength);
@@ -835,6 +847,19 @@ class ServerUpdatePagePacket extends ServerPacket {
                     offset: offset
                 });
                 data.skip(length);
+            }
+        }
+        if ((mask & ServerUpdatePagePacket.COMPONENT_PARENT_UPDATED_BIT) > 0) {
+            let amount = data.readUint32();
+            for (let i = 0; i < amount; i++) {
+                let componentId = data.readUint32();
+                let parentId = data.readUint32();
+                let childIndex = data.readUint32();
+                this.parentUpdatedComponents.push({
+                    componentId: componentId,
+                    parentId: parentId,
+                    childIndex: childIndex
+                });
             }
         }
     }
