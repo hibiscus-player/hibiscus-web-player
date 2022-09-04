@@ -387,7 +387,7 @@ class TextInputComponent extends UIComponent {
     }
     _queueTimeout() {
         if (this.typeTimeoutId != null) clearTimeout(this.typeTimeoutId);
-        this.typeTimeoutId = setTimeout(this._sendUpdate, 1000);
+        this.typeTimeoutId = setTimeout(()=>this._sendUpdate(), 1000);
     }
     _sendUpdate() {
         if (this.typeTimeoutId != null) clearTimeout(this.typeTimeoutId);
@@ -404,11 +404,14 @@ class TextInputComponent extends UIComponent {
         return TextInputComponent.COMPONENT_TYPE;
     }
     static UpdateEventType = class {
-        static EVERY_KEY = new this();
-        static AFTER_CHANGE = new this();
-        static AFTER_CHANGE_TIMEOUT = new this();
+        static EVERY_KEY = new this("Every Key");
+        static AFTER_CHANGE = new this("After Change");
+        static AFTER_CHANGE_TIMEOUT = new this("After Change (with timeout)");
         static VALUES = [this.EVERY_KEY, this.AFTER_CHANGE, this.AFTER_CHANGE_TIMEOUT];
-        constructor() {}
+        string;
+        constructor(string) {
+            this.string = string;
+        }
     }
 } 
 
